@@ -3,7 +3,7 @@
     <!-- All Notes (ซ้าย 7 คอลัมน์) -->
     <div class="col-span-7">
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">📚 All Notes</h1>
+        <h1 class="text-3xl font-bold">Share Notes with me</h1>
         <button
           @click="fetchAllNotes"
           class="btn-black text-sm px-3 py-1 hover:bg-gray-700"

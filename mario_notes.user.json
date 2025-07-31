@@ -1,0 +1,22 @@
+[{
+  "_id": {
+    "$oid": "68787f39091508feae0c15f2"
+  },
+  "username": "admin",
+  "password": "scrypt:32768:8:1$7H1ao2KDQ9DpBL85$676934694f7e34ee0630362b5ab7540de7d26a9829295e0dd92d95f05f05d5767bc3048842229593bc08bbc3536f5ac2831d3606e07b9f5cd273ef1b0b28de10"
+},
+{
+  "_id": {
+    "$oid": "6878a7976d7b755f034a2fe6"
+  },
+  "username": "chanidd",
+  "password": "scrypt:32768:8:1$qnbk6ir4NgyC2pKD$5e1e9bc16d87b36d014165c9fb17b9f137b9b720e58627f43116860d4732fe3773dfe9dab8665ede8f78a5c8f01f515f091a52bcb7e360b1146fcbc908a7a98a"
+},
+{
+  "_id": {
+    "$oid": "688ae05c737b8ec40fa507e4"
+  },
+  "username": "admin1",
+  "password": "scrypt:32768:8:1$bjm2LVTUIe059EGS$8b79aa833e15142fa09efa348249f5a8cfd85aec4596bb334f8a29605b8ffbb1ea8418a2c1ea69d5932c52d39fa11ce83093559bfc4adfb3b0b5dd9dc99db657",
+  "profile_image_url": ""
+}]
