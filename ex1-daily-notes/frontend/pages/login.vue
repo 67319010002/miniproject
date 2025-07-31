@@ -45,6 +45,12 @@ const password = ref('')
 const errorMsg = ref('')
 const router = useRouter()
 
+// ฟังก์ชันอัปเดต username ใน localStorage และ reactive variable
+function updateUsername(newUsername) {
+  localStorage.setItem('username', newUsername)
+  username.value = newUsername
+}
+
 const handleLogin = async () => {
   errorMsg.value = ''
   try {
@@ -55,12 +61,16 @@ const handleLogin = async () => {
 
     localStorage.setItem('token', res.data.access_token)
 
-    // เก็บข้อมูล user ลง localStorage (ถ้ามีข้อมูล user ใน response)
-    if(res.data.user){
-      localStorage.setItem('user', JSON.stringify({
-        username: res.data.user.username,
-        email: res.data.user.email
-      }))
+    // ถ้ามี user data ใน response ให้เก็บและอัปเดต username
+    if (res.data.user) {
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          username: res.data.user.username,
+          email: res.data.user.email
+        })
+      )
+      updateUsername(res.data.user.username) // เพิ่มตรงนี้
     }
 
     router.push('/dashboard')

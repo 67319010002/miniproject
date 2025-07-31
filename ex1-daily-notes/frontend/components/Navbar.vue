@@ -102,7 +102,11 @@ const closeDropdown = () => {
 }
 
 const handleLogout = () => {
+  // ลบข้อมูล token และ username ใน localStorage
   localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  localStorage.removeItem('user')
+
   closeDropdown()
   router.push('/login')
 }
