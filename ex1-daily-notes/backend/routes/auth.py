@@ -2,19 +2,23 @@ from flask import Blueprint, request, jsonify
 from models import User
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from bson import ObjectId
+import os
 
 auth = Blueprint('auth', __name__)
 
+UPLOAD_FOLDER = 'static/uploads'
+
 # -----------------------------
-# ✅ Register Route
+# ✅ Register Route (รองรับทั้ง URL และอัปโหลดรูป)
 # -----------------------------
 @auth.route('/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    profile_image_url = data.get('profile_image_url')
+    username = request.form.get('username')
+    password = request.form.get('password')
+    profile_image_url = request.form.get('profile_image_url', "")
+    profile_image = request.files.get('profile_image')
 
     if not username or not password:
         return jsonify({"msg": "Username and password required"}), 400
@@ -22,11 +26,20 @@ def register():
     if User.objects(username=username).first():
         return jsonify({"msg": "Username already exists"}), 400
 
+    # หากมีการอัปโหลดไฟล์ภาพ → ให้ใช้ไฟล์แทน URL
+    if profile_image:
+        filename = secure_filename(profile_image.filename)
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
+        profile_image.save(save_path)
+        profile_image_url = f"/{save_path}"  # สำหรับ frontend ใช้งาน
+
     hashed_pw = generate_password_hash(password)
     user = User(
         username=username,
         password=hashed_pw,
-        profile_image_url=profile_image_url or ""
+        profile_image_url=profile_image_url
     )
     user.save()
 

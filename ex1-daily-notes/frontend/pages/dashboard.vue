@@ -2,6 +2,23 @@
   <div class="min-h-screen bg-black text-white p-6 max-w-6xl mx-auto grid grid-cols-10 gap-8">
     <!-- All Notes (ซ้าย 7 คอลัมน์) -->
     <div class="col-span-7">
+      <!-- ส่วนแสดงรูปและชื่อผู้ใช้ -->
+      <div class="flex items-center mb-6 space-x-3">
+        <img
+          v-if="profilePic"
+          :src="profilePic"
+          alt="Profile Picture"
+          class="w-10 h-10 rounded-full object-cover"
+        />
+        <div
+          v-else
+          class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg select-none"
+        >
+          {{ usernameInitial }}
+        </div>
+        <span class="text-white font-semibold text-lg select-none">{{ username }}</span>
+      </div>
+
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Share Notes with me</h1>
         <button
@@ -217,6 +234,14 @@ const token = localStorage.getItem("token");
 
 // reactive username
 const username = ref(localStorage.getItem("username") || "guest");
+
+// ดึงรูปโปรไฟล์จาก localStorage (ถ้ามี)
+const profilePic = ref(localStorage.getItem("profilePic") || "");
+
+// ตัวอักษรแรกของ username แสดงตอนไม่มีรูป
+const usernameInitial = computed(() => {
+  return username.value ? username.value.charAt(0).toUpperCase() : "";
+});
 
 const selectedNote = ref(null);
 const openNoteModal = (note) => {
