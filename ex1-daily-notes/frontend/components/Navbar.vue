@@ -4,55 +4,59 @@
       DailyNotes
     </NuxtLink>
 
-    <div class="ml-auto relative">
-      <button
-        ref="btnRef"
-        @click="toggleDropdown"
-        class="p-2 rounded hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        aria-label="Settings"
+    <div class="ml-auto flex items-center gap-3">
+      <!-- ปุ่ม Profile แยกออกมา -->
+      <NuxtLink
+        to="/profile"
+        class="px-3 py-2 rounded hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
       >
-        ⚙️
-      </button>
+        👤 Profile
+      </NuxtLink>
 
-      <div
-        v-if="dropdownOpen"
-        ref="menuRef"
-        class="absolute right-0 mt-2 w-40 bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
-      >
-        <NuxtLink
-          to="/login"
-          class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
-          @click="closeDropdown"
-        >
-          Login
-        </NuxtLink>
-        <NuxtLink
-          to="/register"
-          class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
-          @click="closeDropdown"
-        >
-          Register
-        </NuxtLink>
-        <NuxtLink
-          to="/dashboard"
-          class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
-          @click="closeDropdown"
-        >
-          Dashboard
-        </NuxtLink>
-        <NuxtLink
-          to="/profile"
-          class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
-          @click="closeDropdown"
-        >
-          Profile
-        </NuxtLink>
+      <!-- ปุ่มฟันเฟือง + dropdown -->
+      <div class="relative">
         <button
-          @click="handleLogout"
-          class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
+          ref="btnRef"
+          @click="toggleDropdown"
+          class="p-2 rounded hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          aria-label="Settings"
         >
-          Logout
+          ⚙️
         </button>
+
+        <div
+          v-if="dropdownOpen"
+          ref="menuRef"
+          class="absolute right-0 mt-2 w-40 bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+        >
+          <NuxtLink
+            to="/login"
+            class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
+            @click="closeDropdown"
+          >
+            Login
+          </NuxtLink>
+          <NuxtLink
+            to="/register"
+            class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
+            @click="closeDropdown"
+          >
+            Register
+          </NuxtLink>
+          <NuxtLink
+            to="/dashboard"
+            class="block px-4 py-2 text-white hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
+            @click="closeDropdown"
+          >
+            Dashboard
+          </NuxtLink>
+          <button
+            @click="handleLogout"
+            class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 transition transform hover:scale-110 hover:-translate-y-1"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -81,7 +85,6 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-// ฟังก์ชันคลิกข้างนอกเพื่อปิด dropdown
 const handleClickOutside = (event) => {
   const btn = btnRef.value
   const menu = menuRef.value
