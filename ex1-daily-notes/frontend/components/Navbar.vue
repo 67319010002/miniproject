@@ -1,14 +1,36 @@
 <template>
   <nav class="bg-black text-white px-6 py-4 flex items-center shadow-md relative">
+    <!-- ชื่อแอป -->
     <NuxtLink to="/dashboard" class="font-bold text-2xl hover:text-gray-300 transition flex-shrink-0">
-      DailyNotes
+      ShareNote
     </NuxtLink>
 
+    <!-- ปุ่มต่างๆ ทางขวา -->
     <div class="ml-auto flex items-center gap-3">
-      <!-- ปุ่ม Profile แยกออกมา -->
+      
+      <!-- ปุ่มไปหน้า My Notes -->
+      <NuxtLink
+        to="/mynotes"
+        class="px-3 py-2 rounded bg-green-600 hover:bg-green-700 transition text-white font-semibold"
+        @click="closeDropdown"
+      >
+        📝 My Notes
+      </NuxtLink>
+
+      <!-- ปุ่มไปหน้า Favorite Notes -->
+      <NuxtLink
+        to="/favoritenotes"
+        class="px-3 py-2 rounded bg-pink-600 hover:bg-pink-700 transition text-white font-semibold flex items-center gap-1"
+        @click="closeDropdown"
+      >
+        ❤️ Favorites
+      </NuxtLink>
+
+      <!-- ปุ่มโปรไฟล์ -->
       <NuxtLink
         to="/profile"
         class="px-3 py-2 rounded hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        @click="closeDropdown"
       >
         👤 Profile
       </NuxtLink>
