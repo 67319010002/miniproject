@@ -6,12 +6,13 @@ from config import Config
 
 from routes.auth import auth
 from routes.notes import notes
+from routes.comments import comments # 🔹 เพิ่มบรรทัดนี้
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 CORS(app)
-JWTManager(app)
+jwt = JWTManager(app)
 
 # เชื่อมต่อ MongoDB ด้วย mongoengine โดยตรง
 connect(
@@ -23,6 +24,7 @@ connect(
 # Register Blueprints
 app.register_blueprint(auth, url_prefix="/api")
 app.register_blueprint(notes, url_prefix="/api")
+app.register_blueprint(comments, url_prefix="/api/comments") # 🔹 เพิ่มบรรทัดนี้
 
 # Serve static files (เช่น รูปโปรไฟล์ที่อัปโหลดใน static/uploads)
 @app.route('/static/<path:filename>')

@@ -8,12 +8,21 @@ class User(Document):
     profile_image_url = StringField(default=None)             # URL รูปโปรไฟล์ (optional)
 
 class Note(Document):
-    title = StringField(required=True)                         # หัวข้อโน้ต
-    content = StringField(default='')                          # เนื้อหาโน้ต
-    image_url = StringField(default=None)                      # URL รูปภาพในโน้ต (optional)
-    created_at = DateTimeField(default=datetime.utcnow)        # วันที่สร้าง (อัตโนมัติ)
-    user = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)  # เจ้าของโน้ต
+    title = StringField(required=True)
+    content = StringField(default='')
+    image_url = StringField(default=None)
+    created_at = DateTimeField(default=datetime.utcnow)
+    user = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)
+    # 📌 เพิ่ม field สำหรับเก็บ comments
+    comments = ListField(ReferenceField('Comment'))
+
 
 class Favorite(Document):
     user = ReferenceField(User, required=True, unique=True, reverse_delete_rule=CASCADE)  # ผู้ใช้ที่เก็บรายการโน้ตที่ชอบ (แยกตามคน)
     notes = ListField(ReferenceField(Note), default=list)  # รายการโน้ตที่ถูกกด Favorite
+
+class Comment(Document):
+    note = ReferenceField('Note', reverse_delete_rule=CASCADE, required=True)
+    user = ReferenceField(User, reverse_delete_rule=CASCADE, required=True)
+    content = StringField(required=True, max_length=500)
+    created_at = DateTimeField(default=datetime.utcnow)
