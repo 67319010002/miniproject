@@ -2,22 +2,7 @@
   <div class="min-h-screen bg-black text-white p-6 max-w-6xl mx-auto grid grid-cols-10 gap-8">
     <!-- All Notes (ซ้าย 7 คอลัมน์) -->
     <div class="col-span-7">
-      <!-- ส่วนแสดงรูปและชื่อผู้ใช้ -->
-      <div class="flex items-center mb-6 space-x-3">
-        <img
-          v-if="profilePic"
-          :src="profilePic"
-          alt="Profile Picture"
-          class="w-10 h-10 rounded-full object-cover"
-        />
-        <div
-          v-else
-          class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg select-none"
-        >
-          {{ usernameInitial }}
-        </div>
-        <span class="text-white font-semibold text-lg select-none">{{ username }}</span>
-      </div>
+      
 
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Share Notes with me</h1>
@@ -78,12 +63,24 @@
             />
           </div>
 
+          <!-- แก้ไขส่วนนี้ให้โชว์รูปโปรไฟล์ผู้เขียนพร้อมชื่อ -->
           <div
-            class="text-xs mt-2 select-none"
+            class="flex items-center gap-2 mt-2 select-none"
             :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
             style="white-space: nowrap;"
           >
-            Written by:
+            <img
+              v-if="note.user_profile_pic"
+              :src="getFullProfilePicURL(note.user_profile_pic)"
+              alt="User Profile"
+              class="w-6 h-6 rounded-full object-cover"
+            />
+            <div
+              v-else
+              class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-xs select-none"
+            >
+              {{ note.username ? note.username.charAt(0).toUpperCase() : "?" }}
+            </div>
             <span :class="note.id === selectedNote?.id ? 'font-semibold text-black' : 'font-semibold'">
               {{ note.username || 'Unknown' }}
             </span>
@@ -172,7 +169,7 @@
           </button>
         </div>
       </div>
-      <div v-else class="text-gray-500">No favorite notes yet.</div>
+      <div class="text-gray-500">No favorite notes yet.</div>
     </div>
 
     <!-- Modal Popup for Selected Note -->
@@ -235,8 +232,24 @@ const token = localStorage.getItem("token");
 // reactive username
 const username = ref(localStorage.getItem("username") || "guest");
 
-// ดึงรูปโปรไฟล์จาก localStorage (ถ้ามี)
-const profilePic = ref(localStorage.getItem("profilePic") || "");
+// base url ของ backend สำหรับเติม path รูปโปรไฟล์
+const backendBaseURL = "http://localhost:5000";
+
+// raw รูปโปรไฟล์จาก localStorage
+const profilePicRaw = ref(localStorage.getItem("profilePic") || "");
+
+// computed เพื่อแปลง raw path เป็น url เต็ม
+const profilePic = computed(() => {
+  if (!profilePicRaw.value) return "";
+  if (
+    profilePicRaw.value.startsWith("http://") ||
+    profilePicRaw.value.startsWith("https://")
+  ) {
+    return profilePicRaw.value;
+  }
+  // เติม backendBaseURL ถ้าเป็น path relative
+  return backendBaseURL + profilePicRaw.value;
+});
 
 // ตัวอักษรแรกของ username แสดงตอนไม่มีรูป
 const usernameInitial = computed(() => {
@@ -249,6 +262,15 @@ const openNoteModal = (note) => {
 };
 const closeNoteModal = () => {
   selectedNote.value = null;
+};
+
+// ฟังก์ชันเติม URL รูปโปรไฟล์เต็มจาก backendBaseURL
+const getFullProfilePicURL = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+  return backendBaseURL + path;
 };
 
 // ใช้ Set เก็บ favorite note ids
@@ -272,14 +294,12 @@ const loadFavoritesFromBackend = async () => {
 // toggle favorite และ sync กับ backend
 const toggleFavorite = async (noteId) => {
   try {
-    // เรียก API POST toggle favorite ที่ backend
     await axios.post(
       `http://localhost:5000/api/favorites/${noteId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    // อัปเดต favoriteNotes local หลัง API สำเร็จ
     if (favoriteNotes.value.has(noteId)) {
       favoriteNotes.value.delete(noteId);
     } else {

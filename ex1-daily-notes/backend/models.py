@@ -3,6 +3,7 @@ from datetime import datetime
 
 class User(Document):
     username = StringField(required=True, unique=True)        # ชื่อผู้ใช้ ห้ามซ้ำ
+    email = StringField(required=False, unique=True)           # อีเมล (optional) เพิ่ม unique ได้ถ้าต้องการ
     password = StringField(required=True)                     # รหัสผ่าน (hash แล้ว)
     profile_image_url = StringField(default=None)             # URL รูปโปรไฟล์ (optional)
 

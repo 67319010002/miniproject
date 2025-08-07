@@ -23,7 +23,7 @@
         class="mb-3 p-3 w-full rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
       />
 
-      <!-- ✅ เพิ่มฟิลด์เลือกรูปภาพ -->
+      <!-- ✅ ฟิลด์เลือกรูป -->
       <input
         type="file"
         @change="onFileChange"
@@ -54,9 +54,9 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const username = ref('')
 const email = ref('')
@@ -90,16 +90,23 @@ const handleRegister = async () => {
       formData.append('profile_image', profileImage.value)
     }
 
-    await axios.post('http://localhost:5000/api/register', formData, {
+    const res = await axios.post('http://localhost:5000/api/register', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
 
-    localStorage.setItem('user', JSON.stringify({
-      username: username.value,
-      email: email.value
-    }))
+    // เก็บข้อมูล user ที่ได้จาก response (เช่น profile_image_url) ลง localStorage
+    if (res.data.user) {
+      localStorage.setItem('user', JSON.stringify(res.data.user))
+    } else {
+      // fallback กรณีไม่มี user ใน response
+      localStorage.setItem('user', JSON.stringify({
+        username: username.value,
+        email: email.value,
+        profile_image_url: ''
+      }))
+    }
 
     successMsg.value = 'Registration successful. Redirecting to login...'
     setTimeout(() => {

@@ -11,11 +11,12 @@ auth = Blueprint('auth', __name__)
 UPLOAD_FOLDER = 'static/uploads'
 
 # -----------------------------
-# ✅ Register Route (รองรับทั้ง URL และอัปโหลดรูป)
+# ✅ Register Route (อัปโหลดรูปได้ + ส่งคืน user พร้อม email)
 # -----------------------------
 @auth.route('/register', methods=['POST'])
 def register():
     username = request.form.get('username')
+    email = request.form.get('email', '')  # รับ email ด้วย
     password = request.form.get('password')
     profile_image_url = request.form.get('profile_image_url', "")
     profile_image = request.files.get('profile_image')
@@ -26,24 +27,36 @@ def register():
     if User.objects(username=username).first():
         return jsonify({"msg": "Username already exists"}), 400
 
-    # หากมีการอัปโหลดไฟล์ภาพ → ให้ใช้ไฟล์แทน URL
+    if email and User.objects(email=email).first():
+        return jsonify({"msg": "Email already exists"}), 400
+
+    # จัดการอัปโหลดรูป
     if profile_image:
         filename = secure_filename(profile_image.filename)
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
         save_path = os.path.join(UPLOAD_FOLDER, filename)
         profile_image.save(save_path)
-        profile_image_url = f"/{save_path}"  # สำหรับ frontend ใช้งาน
+        # ให้เก็บเป็น path แบบ relative ที่ frontend เรียกใช้ได้ เช่น /static/uploads/filename
+        profile_image_url = f"/static/uploads/{filename}"
 
     hashed_pw = generate_password_hash(password)
     user = User(
         username=username,
+        email=email,                     # บันทึก email
         password=hashed_pw,
         profile_image_url=profile_image_url
     )
     user.save()
 
-    return jsonify({"msg": "User registered successfully"}), 201
+    return jsonify({
+        "msg": "User registered successfully",
+        "user": {
+            "username": user.username,
+            "email": user.email,
+            "profile_image_url": user.profile_image_url or ""
+        }
+    }), 201
 
 # -----------------------------
 # ✅ Login Route
@@ -69,7 +82,7 @@ def login():
     ), 200
 
 # -----------------------------
-# ✅ Profile Route (requires JWT)
+# ✅ Profile Route (JWT Required)
 # -----------------------------
 @auth.route('/profile', methods=['GET'])
 @jwt_required()

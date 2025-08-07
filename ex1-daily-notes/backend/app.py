@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from mongoengine import connect
@@ -23,6 +23,11 @@ connect(
 # Register Blueprints
 app.register_blueprint(auth, url_prefix="/api")
 app.register_blueprint(notes, url_prefix="/api")
+
+# Serve static files (เช่น รูปโปรไฟล์ที่อัปโหลดใน static/uploads)
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
 
 if __name__ == "__main__":
     app.run(debug=True)

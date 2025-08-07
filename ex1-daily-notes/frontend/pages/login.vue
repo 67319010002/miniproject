@@ -45,7 +45,6 @@ const password = ref('')
 const errorMsg = ref('')
 const router = useRouter()
 
-// ฟังก์ชันอัปเดต username ใน localStorage และ reactive variable
 function updateUsername(newUsername) {
   localStorage.setItem('username', newUsername)
   username.value = newUsername
@@ -53,6 +52,12 @@ function updateUsername(newUsername) {
 
 const handleLogin = async () => {
   errorMsg.value = ''
+
+  if (!username.value || !password.value) {
+    errorMsg.value = 'Please enter username and password.'
+    return
+  }
+
   try {
     const res = await axios.post('http://localhost:5000/api/login', {
       username: username.value,
@@ -61,22 +66,22 @@ const handleLogin = async () => {
 
     localStorage.setItem('token', res.data.access_token)
 
-    // ถ้ามี user data ใน response ให้เก็บและอัปเดต username
     if (res.data.user) {
       localStorage.setItem(
         'user',
         JSON.stringify({
           username: res.data.user.username,
-          email: res.data.user.email
+          email: res.data.user.email,
+          profile_image_url: res.data.user.profile_image_url || ''
         })
       )
-      updateUsername(res.data.user.username) // เพิ่มตรงนี้
+      updateUsername(res.data.user.username)
     }
 
     router.push('/dashboard')
   } catch (err) {
-    errorMsg.value =
-      err.response?.data?.msg || 'Login failed. Please try again.'
+    errorMsg.value = err.response?.data?.msg || 'Login failed. Please try again.'
+    password.value = ''
   }
 }
 </script>
