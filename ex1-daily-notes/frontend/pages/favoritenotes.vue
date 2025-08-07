@@ -57,36 +57,63 @@
     </div>
 
     <div
-      v-if="selectedNote"
-      class="fixed inset-0 flex items-center justify-center z-50"
-      @click.self="closeNoteModal"
-      style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
+  v-if="selectedNote"
+  class="fixed inset-0 flex items-center justify-center z-50"
+  @click.self="closeNoteModal"
+  style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
+>
+  <div class="bg-white p-6 rounded-md max-w-lg w-full shadow-lg relative">
+    <button
+      @click="closeNoteModal"
+      class="absolute top-2 right-2 text-gray-700 hover:text-black text-xl font-bold"
+      aria-label="Close modal"
     >
-      <div class="bg-gray-900 p-6 rounded-md max-w-lg w-full shadow-lg relative">
-        <button
-          @click="closeNoteModal"
-          class="absolute top-2 right-2 text-gray-400 hover:text-white text-xl font-bold"
-          aria-label="Close modal"
-        >
-          &times;
-        </button>
-
-        <h2 class="text-2xl font-bold mb-2">{{ selectedNote.title }}</h2>
-        <p class="whitespace-pre-wrap text-gray-300 mb-4">{{ selectedNote.content }}</p>
-
-        <div v-if="selectedNote.image_url" class="mt-2">
-          <img
-            :src="selectedNote.image_url"
-            alt="Note Image"
-            class="w-full max-h-60 object-contain rounded"
-          />
-        </div>
-
-        <div class="text-xs text-gray-400 mt-4">
-          Written by: <span class="font-semibold">{{ selectedNote.username || 'Unknown' }}</span>
-        </div>
-      </div>
+      &times;
+    </button>
+    <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
+    <p class="whitespace-pre-wrap text-gray-900 mb-4">{{ selectedNote.content }}</p>
+    <div v-if="selectedNote.image_url" class="mt-2">
+      <img
+        :src="selectedNote.image_url"
+        alt="Note Image"
+        class="w-full max-h-60 object-contain rounded"
+      />
     </div>
+    <div class="text-xs text-gray-700 mt-4">
+      Written by: <span class="font-semibold">{{ selectedNote.username || 'Unknown' }}</span>
+    </div>
+
+    <div class="mt-6 border-t border-gray-200 pt-4 text-black">
+      <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
+      <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+        <div v-if="noteComments.length > 0">
+          <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
+            <div class="flex items-center text-sm font-semibold text-gray-800">
+              <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
+              {{ comment.username }}
+            </div>
+            <p class="mt-1 text-gray-700">{{ comment.content }}</p>
+          </div>
+        </div>
+        <div v-else class="text-gray-500 text-center">No comments yet.</div>
+      </div>
+      <form @submit.prevent="submitComment" class="mt-4">
+        <textarea
+          v-model="newCommentContent"
+          placeholder="Write a comment..."
+          class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+          rows="2"
+        ></textarea>
+        <button
+          type="submit"
+          class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
+        >
+          Post Comment
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
   </div>
 </template>
 
@@ -96,73 +123,116 @@ import { ref, onMounted, computed } from 'vue'
 
 const token = localStorage.getItem('token')
 const allNotes = ref([])
-const favoriteNoteIds = ref(new Set()) // เปลี่ยนชื่อตัวแปรให้ชัดเจนขึ้น
+const favoriteNoteIds = ref(new Set())
 
 const selectedNote = ref(null)
+// 🔹 เพิ่มตัวแปรสำหรับคอมเมนต์
+const newCommentContent = ref('')
+const noteComments = ref([])
+
+// 🔹 ปรับปรุงฟังก์ชัน openNoteModal ให้ดึงคอมเมนต์มาแสดง
 const openNoteModal = (note) => {
   selectedNote.value = note
+  if (note && note.id) {
+    fetchComments(note.id)
+  }
 }
+
+// 🔹 ปรับปรุงฟังก์ชัน closeNoteModal ให้ล้างข้อมูลคอมเมนต์
 const closeNoteModal = () => {
   selectedNote.value = null
+  noteComments.value = []
+  newCommentContent.value = ''
 }
 
-// 🔸 ฟังก์ชันใหม่: ดึงรายการ Favorite จาก Backend
-const fetchFavoritesFromBackend = async () => {
+// 🔹 ฟังก์ชันสำหรับดึงคอมเมนต์จาก Backend
+const fetchComments = async (noteId) => {
   try {
-    const res = await axios.get('http://localhost:5000/api/favorites', {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await axios.get(`http://localhost:5000/api/comments/${noteId}`, {
+      headers: { Authorization: `Bearer ${token}` }
     })
-    // เก็บเฉพาะ ID ของโน้ตที่ชื่นชอบ
-    favoriteNoteIds.value = new Set(res.data.map(note => note.id))
+    noteComments.value = res.data
   } catch (e) {
-    console.error('Failed to fetch favorite notes:', e)
+    console.error('Failed to fetch comments:', e)
   }
 }
 
-// 🔸 ฟังก์ชันใหม่: ดึงโน้ตทั้งหมดเพื่อใช้กรองรายการ Favorite
-const fetchAllNotes = async () => {
-  try {
-    const res = await axios.get('http://localhost:5000/api/notes/all', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    allNotes.value = res.data
-  } catch (e) {
-    console.error('Failed to fetch all notes:', e)
-  }
-}
+// 🔹 ฟังก์ชันสำหรับส่งคอมเมนต์ใหม่
+const submitComment = async () => {
+  if (!newCommentContent.value.trim()) return
 
-// 🔸 ฟังก์ชันใหม่: สลับสถานะ Favorite โดยเรียก API
-const toggleFavorite = async (noteId) => {
   try {
-    await axios.post(
-      `http://localhost:5000/api/favorites/${noteId}`,
-      {},
+    const res = await axios.post(
+      `http://localhost:5000/api/comments/${selectedNote.value.id}`,
+      { content: newCommentContent.value },
       { headers: { Authorization: `Bearer ${token}` } }
-    );
-    // อัปเดตรายการ favorite ใน Vue.js หลังจาก API สำเร็จ
-    if (favoriteNoteIds.value.has(noteId)) {
-      favoriteNoteIds.value.delete(noteId);
-    } else {
-      favoriteNoteIds.value.add(noteId);
+    )
+    noteComments.value.unshift(res.data)
+    newCommentContent.value = ''
+    
+    // อัปเดตจำนวนคอมเมนต์บนโน้ตที่เลือก
+    if (selectedNote.value) {
+      selectedNote.value.comment_count = noteComments.value.length
     }
   } catch (e) {
-    console.error('Failed to toggle favorite:', e);
+    console.error('Failed to post comment:', e)
   }
+}
+
+// ... โค้ดเดิมส่วนอื่นๆ
+const fetchFavoritesFromBackend = async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/api/favorites', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    // เก็บเฉพาะ ID ของโน้ตที่ชื่นชอบ
+    favoriteNoteIds.value = new Set(res.data.map(note => note.id))
+  } catch (e) {
+    console.error('Failed to fetch favorite notes:', e)
+  }
+}
+
+const fetchAllNotes = async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/api/notes/all', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    allNotes.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch all notes:', e)
+  }
+}
+
+const toggleFavorite = async (noteId) => {
+  try {
+    await axios.post(
+      `http://localhost:5000/api/favorites/${noteId}`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    // อัปเดตรายการ favorite ใน Vue.js หลังจาก API สำเร็จ
+    if (favoriteNoteIds.value.has(noteId)) {
+      favoriteNoteIds.value.delete(noteId);
+    } else {
+      favoriteNoteIds.value.add(noteId);
+    }
+  } catch (e) {
+    console.error('Failed to toggle favorite:', e);
+  }
 };
 
 const favoriteNotesList = computed(() => {
-  return allNotes.value.filter(note => favoriteNoteIds.value.has(note.id))
+  return allNotes.value.filter(note => favoriteNoteIds.value.has(note.id))
 })
 
 const refreshFavorites = () => {
-  fetchFavoritesFromBackend()
-  fetchAllNotes()
+  fetchFavoritesFromBackend()
+  fetchAllNotes()
 }
 
 onMounted(() => {
-  // 🔸 แก้ไข: ตอนเริ่มทำงานให้เรียกฟังก์ชันใหม่
-  fetchFavoritesFromBackend()
-  fetchAllNotes()
+  fetchFavoritesFromBackend()
+  fetchAllNotes()
 })
 </script>
 
