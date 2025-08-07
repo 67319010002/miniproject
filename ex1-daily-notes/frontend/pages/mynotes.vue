@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-black text-white p-6 max-w-4xl mx-auto">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-6 max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">📝 My Notes</h1>
 
     <!-- Create Note -->
@@ -7,52 +7,51 @@
       <input
         v-model="title"
         placeholder="Title"
-        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md w-1/4 focus:outline-none focus:ring focus:ring-blue-500"
+        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md w-1/4 focus:outline-none focus:ring focus:ring-blue-500 shadow-sm"
       />
       <input
         v-model="content"
         placeholder="Content"
-        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md flex-1 focus:outline-none focus:ring focus:ring-blue-500"
+        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md flex-1 focus:outline-none focus:ring focus:ring-blue-500 shadow-sm"
       />
     </div>
     <div class="mb-4 flex items-center">
       <input
         v-model="imageUrl"
         placeholder="Image URL"
-        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md w-full focus:outline-none focus:ring focus:ring-blue-500"
+        class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md w-full focus:outline-none focus:ring focus:ring-blue-500 shadow-sm"
       />
       <img
         v-if="imageUrl && !imagePreviewError"
         :src="imageUrl"
-        alt="Preview Image"
+        alt="Preview"
         class="inline-block ml-2 w-16 max-h-12 object-contain rounded"
         @error="imagePreviewError = true"
         @load="imagePreviewError = false"
       />
-      <span
-        v-if="imagePreviewError"
-        class="text-red-500 ml-2"
-      >URL รูปภาพไม่ถูกต้อง</span>
+      <span v-if="imagePreviewError" class="text-red-500 ml-2">URL รูปภาพไม่ถูกต้อง</span>
     </div>
     <button
       @click="createNote"
-      class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md w-full mb-6"
+      class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-2 rounded-md w-full mb-6 font-semibold shadow-md transition"
     >
-      Add
+      ➕ Add Note
     </button>
 
+    <!-- Search -->
     <input
       v-model="searchMyQuery"
-      placeholder="Search my notes..."
-      class="bg-gray-800 text-white border border-gray-700 p-2 rounded-md w-full mb-4 focus:outline-none focus:ring focus:ring-blue-500"
+      placeholder="🔍 Search your notes..."
+      class="bg-gray-800 text-white border border-gray-700 p-3 rounded-md w-full mb-4 focus:outline-none focus:ring focus:ring-blue-500 shadow-sm"
       @input="debouncedSearchMy"
     />
 
+    <!-- Notes -->
     <div v-if="myNotes.length > 0" class="space-y-4">
       <div
         v-for="note in myNotes"
         :key="note.id"
-        class="bg-gray-900 border border-gray-700 p-4 rounded-md relative group"
+        class="bg-gray-900 border border-gray-700 p-4 rounded-md relative group transition transform hover:-translate-y-1 hover:shadow-lg"
       >
         <div class="flex justify-between items-center mb-2">
           <h2 v-if="editNoteId !== note.id" class="text-xl font-semibold">{{ note.title }}</h2>
@@ -115,7 +114,7 @@
         ></textarea>
 
         <div v-else>
-          <p class="text-gray-300 mt-2">{{ note.content }}</p>
+          <p class="text-gray-300 mt-2 whitespace-pre-wrap">{{ note.content }}</p>
           <div v-if="note.image_url" class="mt-2">
             <img
               :src="note.image_url"
@@ -126,14 +125,17 @@
         </div>
 
         <div
-          class="absolute bottom-2 right-2 bg-gray-800 text-xs text-gray-300 px-2 py-1 rounded select-none z-10"
+          class="absolute bottom-2 right-2 bg-gray-800 text-xs text-gray-400 px-2 py-1 rounded select-none z-10 italic"
           style="white-space: nowrap;"
         >
-          Written by: <span class="font-semibold">{{ note.username || 'Unknown' }}</span>
+          ✍️ <span class="font-semibold">{{ note.username || 'Unknown' }}</span>
         </div>
       </div>
     </div>
-    <div v-else class="text-gray-500 mt-8">No notes to display</div>
+
+    <div v-else class="text-gray-500 mt-8 text-center text-lg">
+      🗒️ No notes to display
+    </div>
   </div>
 </template>
 
@@ -250,35 +252,11 @@ onMounted(() => {
 </script>
 
 <style>
-/* เหมือนกับสไตล์ที่คุณมี */
 .btn-black {
-  background-color: #000;
+  background-color: #111827;
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
   border: 1px solid transparent;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  user-select: none;
-}
-
-.btn-black:hover {
-  background-color: #222;
-  color: #a3a3a3;
-  border-color: #555;
-}
-
-.btn-black.text-red-500 {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-  font-size: 1.125rem;
-  line-height: 1;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 80px;
 }
 </style>
