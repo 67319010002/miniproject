@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-6 max-w-4xl mx-auto">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-6 max-w-6xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">📝 My Notes</h1>
 
     <!-- Create Note -->
@@ -46,81 +46,81 @@
       @input="debouncedSearchMy"
     />
 
-    <!-- Notes -->
-    <div v-if="myNotes.length > 0" class="space-y-4">
+    <!-- Notes in Grid -->
+    <div v-if="myNotes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <div
         v-for="note in myNotes"
         :key="note.id"
-        class="bg-gray-900 border border-gray-700 p-4 rounded-md relative group transition transform hover:-translate-y-1 hover:shadow-lg"
+        class="bg-gray-900 border border-gray-700 p-4 rounded-md relative group transition transform hover:-translate-y-1 hover:shadow-lg min-h-[300px] flex flex-col justify-between"
       >
-        <div class="flex justify-between items-center mb-2">
-          <h2 v-if="editNoteId !== note.id" class="text-xl font-semibold">{{ note.title }}</h2>
-
-          <div class="flex space-x-2 items-center">
-            <button
-              v-if="editNoteId === note.id"
-              @click="saveNote(note.id)"
-              class="btn-black"
-              title="Save"
-            >
-              💾
-            </button>
-            <button
-              v-if="editNoteId === note.id"
-              @click="cancelEdit"
-              class="btn-black"
-              title="Cancel"
-            >
-              ✖️
-            </button>
-
-            <template v-else>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h2 v-if="editNoteId !== note.id" class="text-xl font-semibold">{{ note.title }}</h2>
+            <div class="flex space-x-2 items-center">
               <button
-                @click="startEdit(note)"
+                v-if="editNoteId === note.id"
+                @click="saveNote(note.id)"
                 class="btn-black"
-                title="Edit"
+                title="Save"
               >
-                ✏️
+                💾
               </button>
               <button
-                @click="deleteNote(note.id)"
-                class="btn-black text-red-500 hover:text-red-600"
-                title="Delete"
+                v-if="editNoteId === note.id"
+                @click="cancelEdit"
+                class="btn-black"
+                title="Cancel"
               >
-                🗑️
+                ✖️
               </button>
-            </template>
+              <template v-else>
+                <button
+                  @click="startEdit(note)"
+                  class="btn-black"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  @click="deleteNote(note.id)"
+                  class="btn-black text-red-500 hover:text-red-600"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </template>
+            </div>
           </div>
-        </div>
 
-        <div v-if="editNoteId === note.id" class="mb-2 space-y-2">
-          <input
-            v-model="editTitle"
-            class="bg-gray-800 text-white border border-gray-600 p-1 rounded w-full"
-            placeholder="Title"
-          />
-          <input
-            v-model="editImageUrl"
-            class="bg-gray-800 text-white border border-gray-600 p-1 rounded w-full"
-            placeholder="Image URL"
-          />
-        </div>
-
-        <textarea
-          v-if="editNoteId === note.id"
-          v-model="editContent"
-          class="bg-gray-800 text-white border border-gray-600 p-2 rounded w-full"
-          rows="3"
-        ></textarea>
-
-        <div v-else>
-          <p class="text-gray-300 mt-2 whitespace-pre-wrap">{{ note.content }}</p>
-          <div v-if="note.image_url" class="mt-2">
-            <img
-              :src="note.image_url"
-              alt="Note Image"
-              class="w-full max-h-40 object-contain rounded"
+          <div v-if="editNoteId === note.id" class="mb-2 space-y-2">
+            <input
+              v-model="editTitle"
+              class="bg-gray-800 text-white border border-gray-600 p-1 rounded w-full"
+              placeholder="Title"
             />
+            <input
+              v-model="editImageUrl"
+              class="bg-gray-800 text-white border border-gray-600 p-1 rounded w-full"
+              placeholder="Image URL"
+            />
+          </div>
+
+          <textarea
+            v-if="editNoteId === note.id"
+            v-model="editContent"
+            class="bg-gray-800 text-white border border-gray-600 p-2 rounded w-full"
+            rows="3"
+          ></textarea>
+
+          <div v-else>
+            <p class="text-gray-300 mt-2 whitespace-pre-wrap text-sm">{{ note.content }}</p>
+            <div v-if="note.image_url" class="mt-2">
+              <img
+                :src="note.image_url"
+                alt="Note Image"
+                class="w-full h-32 object-cover rounded"
+              />
+            </div>
           </div>
         </div>
 
