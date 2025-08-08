@@ -13,11 +13,10 @@ app.config.from_object(Config)
 CORS(app)
 jwt = JWTManager(app)
 
-# เชื่อมต่อ MongoDB ด้วย mongoengine โดยตรง
+# เชื่อมต่อ MongoDB ด้วย mongoengine โดยตรง (ใช้ connection string)
 connect(
     db=app.config["MONGODB_SETTINGS"]["db"],
-    host=app.config["MONGODB_SETTINGS"]["host"],
-    port=app.config["MONGODB_SETTINGS"]["port"]
+    host=app.config["MONGODB_SETTINGS"]["host"]
 )
 
 # Register Blueprints

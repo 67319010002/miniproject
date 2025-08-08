@@ -234,37 +234,36 @@ def get_comments(note_id):
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
 # 🔹 Route สำหรับเพิ่มคอมเมนต์ใหม่
 @notes.route("/comments/<note_id>", methods=["POST"])
 @jwt_required()
 def add_comment(note_id):
     try:
         user_id = get_jwt_identity()
-        user_oid = ObjectId(user_id)
-        note_oid = ObjectId(note_id)
-        
-        note = Note.objects(id=note_oid).first()
+        user = User.objects(id=ObjectId(user_id)).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        note = Note.objects(id=ObjectId(note_id)).first()
         if not note:
             return jsonify({"error": "Note not found"}), 404
         
         data = request.get_json()
-        content = data.get("content")
-        
+        content = data.get("content", "").strip()
         if not content:
             return jsonify({"error": "Comment content is required"}), 400
         
+        # สร้างคอมเมนต์ใหม่ (ต้องส่งเป็น object reference ไม่ใช่แค่ ObjectId)
         new_comment = Comment(
-            user=user_oid,
-            note=note_oid,
-            content=content,
+            user=user,
+            note=note,
+            content=content
         )
         new_comment.save()
 
-        # 🔹 อัปเดตจำนวนคอมเมนต์ในโน้ตที่เกี่ยวข้อง
+        # อัปเดตจำนวนคอมเมนต์ในโน้ต
         note.update(inc__comment_count=1)
 
-        user = User.objects(id=user_oid).first()
         return jsonify({
             "id": str(new_comment.id),
             "content": new_comment.content,
@@ -273,6 +272,7 @@ def add_comment(note_id):
         }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 # 🔹 Route สำหรับลบคอมเมนต์
 @notes.route("/comments/<comment_id>", methods=["DELETE"])

@@ -275,30 +275,23 @@ import { debounce } from "lodash";
 const allNotes = ref([]);
 const searchAllQuery = ref("");
 const token = localStorage.getItem("token");
-
-// reactive username
 const username = ref(localStorage.getItem("username") || "guest");
 
-// base url ของ backend สำหรับเติม path รูปโปรไฟล์
-const backendBaseURL = "http://localhost:5000";
+// ดึงค่าจาก .env
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
-// raw รูปโปรไฟล์จาก localStorage
+// raw path รูปโปรไฟล์จาก localStorage
 const profilePicRaw = ref(localStorage.getItem("profilePic") || "");
 
-// computed เพื่อแปลง raw path เป็น url เต็ม
+// แปลง path เป็น URL เต็ม
 const profilePic = computed(() => {
   if (!profilePicRaw.value) return "";
-  if (
-    profilePicRaw.value.startsWith("http://") ||
-    profilePicRaw.value.startsWith("https://")
-  ) {
+  if (profilePicRaw.value.startsWith("http://") || profilePicRaw.value.startsWith("https://")) {
     return profilePicRaw.value;
   }
-  // เติม backendBaseURL ถ้าเป็น path relative
   return backendBaseURL + profilePicRaw.value;
 });
 
-// ตัวอักษรแรกของ username แสดงตอนไม่มีรูป
 const usernameInitial = computed(() => {
   return username.value ? username.value.charAt(0).toUpperCase() : "";
 });
@@ -307,11 +300,10 @@ const selectedNote = ref(null);
 const newCommentContent = ref('');
 const noteComments = ref([]);
 
-
-// 🔹 ฟังก์ชันสำหรับดึงคอมเมนต์จาก Backend
+// ดึงคอมเมนต์
 const fetchComments = async (noteId) => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/comments/${noteId}`, {
+    const res = await axios.get(`${backendBaseURL}/api/comments/${noteId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     noteComments.value = res.data;
@@ -320,36 +312,30 @@ const fetchComments = async (noteId) => {
   }
 };
 
-// 🔹 ฟังก์ชันสำหรับส่งคอมเมนต์ใหม่ไปยัง Backend
+// ส่งคอมเมนต์
 const submitComment = async () => {
-    if (!newCommentContent.value.trim()) return;
+  if (!newCommentContent.value.trim()) return;
+  try {
+    const res = await axios.post(
+      `${backendBaseURL}/api/comments/${selectedNote.value.id}`,
+      { content: newCommentContent.value },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    noteComments.value.unshift(res.data);
+    newCommentContent.value = '';
 
-    try {
-        const res = await axios.post(
-            `http://localhost:5000/api/comments/${selectedNote.value.id}`,
-            { content: newCommentContent.value },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-        noteComments.value.unshift(res.data);
-        newCommentContent.value = '';
-
-        // 🔹 โค้ดที่เพิ่ม: ค้นหาโน้ตใน allNotes และอัปเดต comment_count
-        const noteIndex = allNotes.value.findIndex(note => note.id === selectedNote.value.id);
-        if (noteIndex !== -1) {
-            allNotes.value[noteIndex].comment_count = noteComments.value.length;
-        }
-
-        if (selectedNote.value) {
-            selectedNote.value.comment_count = noteComments.value.length;
-        }
-
-    } catch (e) {
-        console.error('Failed to post comment:', e);
+    const noteIndex = allNotes.value.findIndex(note => note.id === selectedNote.value.id);
+    if (noteIndex !== -1) {
+      allNotes.value[noteIndex].comment_count = noteComments.value.length;
     }
+    if (selectedNote.value) {
+      selectedNote.value.comment_count = noteComments.value.length;
+    }
+  } catch (e) {
+    console.error('Failed to post comment:', e);
+  }
 };
 
-
-// 🔹 ปรับปรุงฟังก์ชัน openNoteModal เพื่อดึงคอมเมนต์มาด้วย
 const openNoteModal = (note) => {
   selectedNote.value = note;
   if (note && note.id) {
@@ -362,54 +348,40 @@ const closeNoteModal = () => {
   newCommentContent.value = '';
 };
 
-// 🔹 ฟังก์ชันสำหรับลบคอมเมนต์
+// ลบคอมเมนต์
 const deleteComment = async (commentId, noteId) => {
-  if (!confirm("Are you sure you want to delete this comment?")) {
-    return;
-  }
+  if (!confirm("Are you sure you want to delete this comment?")) return;
   try {
-    const res = await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
+    const res = await axios.delete(`${backendBaseURL}/api/comments/${commentId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // 🔹 ส่วนสำคัญที่ต้องเพิ่ม/แก้ไข
     if (res.status === 200) {
-      // 1. ลบคอมเมนต์ออกจากอาร์เรย์ใน Frontend ทันที
-      //    โดยใช้ filter เพื่อสร้างอาร์เรย์ใหม่ที่ไม่มีคอมเมนต์ที่ถูกลบ
       noteComments.value = noteComments.value.filter(comment => comment.id !== commentId);
-
-      // 2. อัปเดตจำนวนคอมเมนต์ในโน้ตที่แสดงผลบนหน้าหลัก
-      //    ค้นหาโน้ตที่เกี่ยวข้องใน allNotes และอัปเดต comment_count
       const noteIndex = allNotes.value.findIndex(note => note.id === noteId);
       if (noteIndex !== -1) {
         allNotes.value[noteIndex].comment_count = noteComments.value.length;
       }
     }
-
   } catch (e) {
-   ;
+    console.error('Failed to delete comment:', e);
   }
 };
 
-// ฟังก์ชันเติม URL รูปโปรไฟล์เต็มจาก backendBaseURL
 const getFullProfilePicURL = (path) => {
   if (!path) return "";
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
   return backendBaseURL + path;
 };
 
-// ใช้ Set เก็บ favorite note ids
 const favoriteNotes = ref(new Set());
 
-// โหลด favorite notes จาก backend (API)
+// โหลด favorite
 const loadFavoritesFromBackend = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/favorites", {
+    const res = await axios.get(`${backendBaseURL}/api/favorites`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    // ดึง note ids จาก response
     const favIds = res.data.map((note) => note.id);
     favoriteNotes.value = new Set(favIds);
   } catch (e) {
@@ -418,11 +390,11 @@ const loadFavoritesFromBackend = async () => {
   }
 };
 
-// toggle favorite และ sync กับ backend
+// toggle favorite
 const toggleFavorite = async (noteId) => {
   try {
     await axios.post(
-      `http://localhost:5000/api/favorites/${noteId}`,
+      `${backendBaseURL}/api/favorites/${noteId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -437,9 +409,7 @@ const toggleFavorite = async (noteId) => {
   }
 };
 
-const isFavorite = (noteId) => {
-  return favoriteNotes.value.has(noteId);
-};
+const isFavorite = (noteId) => favoriteNotes.value.has(noteId);
 
 const favoriteNotesList = computed(() => {
   return allNotes.value.filter((note) => favoriteNotes.value.has(note.id));
@@ -447,7 +417,7 @@ const favoriteNotesList = computed(() => {
 
 const fetchAllNotes = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/notes/all", {
+    const res = await axios.get(`${backendBaseURL}/api/notes/all`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     allNotes.value = res.data;
@@ -461,10 +431,8 @@ const searchAllNotes = async () => {
   if (!q) return fetchAllNotes();
   try {
     const res = await axios.get(
-      `http://localhost:5000/api/notes/all/search?q=${encodeURIComponent(q)}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      `${backendBaseURL}/api/notes/all/search?q=${encodeURIComponent(q)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     allNotes.value = res.data;
   } catch (e) {
@@ -472,14 +440,10 @@ const searchAllNotes = async () => {
   }
 };
 
-
-// 🔹 ใช้ lodash.debounce
 const debouncedSearchAll = debounce(() => {
   searchAllNotes();
 }, 300);
 
-
-// เมื่อ username เปลี่ยน หรือโหลดครั้งแรก ให้โหลด favorites และ notes
 watch(username, () => {
   loadFavoritesFromBackend();
   fetchAllNotes();
@@ -490,6 +454,7 @@ onMounted(() => {
   fetchAllNotes();
 });
 </script>
+
 
 <style>
 html,
