@@ -1,9 +1,6 @@
 <template>
   <div class="min-h-screen bg-black text-white p-6 max-w-6xl mx-auto grid grid-cols-10 gap-8">
-    <!-- All Notes (ซ้าย 7 คอลัมน์) -->
     <div class="col-span-7">
-      
-
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Share Notes with me</h1>
         <button
@@ -38,14 +35,20 @@
         >
           <h2 class="text-xl font-semibold truncate">{{ note.title }}</h2>
 
-          <!-- แสดงจำนวนแฟโวริท -->
           <div
             class="text-sm mt-1 select-none"
             :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
           >
             ❤️ {{ note.favorite_count || 0 }} Favorites
           </div>
-
+          <div
+            class="text-sm mt-1 select-none"
+            :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+          >
+            💬 {{ note.comment_count || 0 }} Comments
+          </div>
+          
+          
           <p
             class="mt-2 flex-grow overflow-hidden"
             :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
@@ -63,7 +66,6 @@
             />
           </div>
 
-          <!-- แก้ไขส่วนนี้ให้โชว์รูปโปรไฟล์ผู้เขียนพร้อมชื่อ -->
           <div
             class="flex items-center gap-2 mt-2 select-none"
             :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
@@ -100,11 +102,9 @@
           </button>
         </div>
       </div>
-
       <div v-else class="text-gray-500 mt-8">No notes to display</div>
     </div>
 
-    <!-- Favorite Notes (ขวา 3 คอลัมน์) -->
     <div class="col-span-3 border-l border-gray-700 pl-6">
       <h1 class="text-2xl font-bold mb-4">❤️ Favorites</h1>
       <div v-if="favoriteNotesList.length > 0" class="space-y-4">
@@ -142,12 +142,18 @@
               {{ note.title }}
             </h3>
 
-            <!-- แสดงจำนวนแฟโวริท -->
             <div
               class="text-xs text-gray-400 mb-1 select-none"
               :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
             >
               ❤️ {{ note.favorite_count || 0 }} Favorites
+            </div>
+            
+            <div
+              class="text-xs text-gray-400 mb-1 select-none"
+              :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+            >
+              💬 {{ note.comment_count || 0 }} Comments
             </div>
 
             <p :class="['truncate text-sm', note.id === selectedNote?.id ? 'text-black' : 'text-gray-400']">
@@ -172,7 +178,6 @@
       <div class="text-gray-500">No favorite notes yet.</div>
     </div>
 
-    <!-- Modal Popup for Selected Note -->
     <div
       v-if="selectedNote"
       class="fixed inset-0 flex items-center justify-center z-50"
@@ -203,6 +208,47 @@
           Written by:
           <span class="font-semibold">{{ selectedNote.username || 'Unknown' }}</span>
         </div>
+        
+        <div class="mt-6 border-t border-gray-200 pt-4 text-black">
+          <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
+          <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+            <div v-if="noteComments.length > 0">
+              <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
+  <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
+    <div>
+      <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
+      {{ comment.username }}
+    </div>
+    <button
+      v-if="comment.username === username"
+      @click="deleteComment(comment.id, selectedNote.id)"
+      class="text-red-500 hover:text-red-700 text-xs"
+      title="Delete comment"
+    >
+      &times; Delete
+    </button>
+  </div>
+  <p class="mt-1 text-gray-700">{{ comment.content }}</p>
+</div>
+            </div>
+            <div v-else class="text-gray-500 text-center">No comments yet.</div>
+          </div>
+
+          <form @submit.prevent="submitComment" class="mt-4">
+            <textarea
+              v-model="newCommentContent"
+              placeholder="Write a comment..."
+              class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+              rows="2"
+            ></textarea>
+            <button
+              type="submit"
+              class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
+            >
+              Post Comment
+            </button>
+          </form>
+        </div>
 
         <button
           @click.stop="toggleFavorite(selectedNote.id)"
@@ -224,6 +270,7 @@
 <script setup>
 import axios from "axios";
 import { ref, onMounted, computed, watch } from "vue";
+import { debounce } from "lodash";
 
 const allNotes = ref([]);
 const searchAllQuery = ref("");
@@ -257,11 +304,91 @@ const usernameInitial = computed(() => {
 });
 
 const selectedNote = ref(null);
+const newCommentContent = ref('');
+const noteComments = ref([]);
+
+
+// 🔹 ฟังก์ชันสำหรับดึงคอมเมนต์จาก Backend
+const fetchComments = async (noteId) => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/comments/${noteId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    noteComments.value = res.data;
+  } catch (e) {
+    console.error('Failed to fetch comments:', e);
+  }
+};
+
+// 🔹 ฟังก์ชันสำหรับส่งคอมเมนต์ใหม่ไปยัง Backend
+const submitComment = async () => {
+    if (!newCommentContent.value.trim()) return;
+
+    try {
+        const res = await axios.post(
+            `http://localhost:5000/api/comments/${selectedNote.value.id}`,
+            { content: newCommentContent.value },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        noteComments.value.unshift(res.data);
+        newCommentContent.value = '';
+
+        // 🔹 โค้ดที่เพิ่ม: ค้นหาโน้ตใน allNotes และอัปเดต comment_count
+        const noteIndex = allNotes.value.findIndex(note => note.id === selectedNote.value.id);
+        if (noteIndex !== -1) {
+            allNotes.value[noteIndex].comment_count = noteComments.value.length;
+        }
+
+        if (selectedNote.value) {
+            selectedNote.value.comment_count = noteComments.value.length;
+        }
+
+    } catch (e) {
+        console.error('Failed to post comment:', e);
+    }
+};
+
+
+// 🔹 ปรับปรุงฟังก์ชัน openNoteModal เพื่อดึงคอมเมนต์มาด้วย
 const openNoteModal = (note) => {
   selectedNote.value = note;
+  if (note && note.id) {
+    fetchComments(note.id);
+  }
 };
 const closeNoteModal = () => {
   selectedNote.value = null;
+  noteComments.value = [];
+  newCommentContent.value = '';
+};
+
+// 🔹 ฟังก์ชันสำหรับลบคอมเมนต์
+const deleteComment = async (commentId, noteId) => {
+  if (!confirm("Are you sure you want to delete this comment?")) {
+    return;
+  }
+  try {
+    const res = await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    // 🔹 ส่วนสำคัญที่ต้องเพิ่ม/แก้ไข
+    if (res.status === 200) {
+      // 1. ลบคอมเมนต์ออกจากอาร์เรย์ใน Frontend ทันที
+      //    โดยใช้ filter เพื่อสร้างอาร์เรย์ใหม่ที่ไม่มีคอมเมนต์ที่ถูกลบ
+      noteComments.value = noteComments.value.filter(comment => comment.id !== commentId);
+
+      // 2. อัปเดตจำนวนคอมเมนต์ในโน้ตที่แสดงผลบนหน้าหลัก
+      //    ค้นหาโน้ตที่เกี่ยวข้องใน allNotes และอัปเดต comment_count
+      const noteIndex = allNotes.value.findIndex(note => note.id === noteId);
+      if (noteIndex !== -1) {
+        allNotes.value[noteIndex].comment_count = noteComments.value.length;
+      }
+    }
+
+  } catch (e) {
+   ;
+  }
 };
 
 // ฟังก์ชันเติม URL รูปโปรไฟล์เต็มจาก backendBaseURL
@@ -345,13 +472,12 @@ const searchAllNotes = async () => {
   }
 };
 
-let timeoutAll;
-const debouncedSearchAll = () => {
-  clearTimeout(timeoutAll);
-  timeoutAll = setTimeout(() => {
-    searchAllNotes();
-  }, 300);
-};
+
+// 🔹 ใช้ lodash.debounce
+const debouncedSearchAll = debounce(() => {
+  searchAllNotes();
+}, 300);
+
 
 // เมื่อ username เปลี่ยน หรือโหลดครั้งแรก ให้โหลด favorites และ notes
 watch(username, () => {

@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 CORS(app)
-JWTManager(app)
+jwt = JWTManager(app)
 
 # เชื่อมต่อ MongoDB ด้วย mongoengine โดยตรง
 connect(
