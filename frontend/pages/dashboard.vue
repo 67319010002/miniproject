@@ -259,59 +259,58 @@
 
     </div>
 
-    <!-- ขวา: คอมเมนต์ + ฟอร์ม -->
     <div
-      class="note-comments"
-      style="flex: 1 1 40%; border-left: 1px solid #ddd; padding-left: 12px; display: flex; flex-direction: column; height: 100%;"
-    >
-      <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
-      <div
+    class="note-comments"
+    style="flex: 1 1 40%; border-left: 1px solid #ddd; padding-left: 12px; display: flex; flex-direction: column; height: 100%;"
+>
+    <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
+    <div
         class="comments-list flex-grow overflow-y-auto pr-2"
         style="min-height: 0;"
-      >
+    >
         <div v-if="noteComments.length > 0">
-          <div
-            v-for="comment in noteComments"
-            :key="comment.id"
-            class="p-3 bg-gray-100 rounded-md mb-2"
-          >
             <div
-              class="flex justify-between items-center text-sm font-semibold text-gray-800"
+                v-for="comment in noteComments"
+                :key="comment.id"
+                class="p-3 bg-gray-100 rounded-md mb-2"
             >
-              <div>
-                <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
-                {{ comment.username }}
-              </div>
-              <button
-                v-if="comment.username === username"
-                @click="deleteComment(comment.id, selectedNote.id)"
-                class="text-red-500 hover:text-red-700 text-xs"
-                title="Delete comment"
-              >
-                &times; Delete
-              </button>
+                <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
+                    {{ comment.username }}
+                    <button
+                        v-if="comment.username === username"
+                        @click="deleteComment(comment.id, selectedNote.id)"
+                        class="text-red-500 hover:text-red-700 text-xs"
+                        title="Delete comment"
+                    >
+                        &times; Delete
+                    </button>
+                </div>
+
+                <p class="mt-1 text-gray-700">{{ comment.content }}</p>
+
+                <div class="text-right">
+                    <span class="text-xs text-gray-500">{{ comment.created_at }}</span>
+                </div>
             </div>
-            <p class="mt-1 text-gray-700">{{ comment.content }}</p>
-          </div>
         </div>
         <div v-else class="text-gray-500 text-center">No comments yet.</div>
-      </div>
+    </div>
 
-      <form @submit.prevent="submitComment" class="mt-4">
+    <form @submit.prevent="submitComment" class="mt-4">
         <textarea
-          v-model="newCommentContent"
-          placeholder="Write a comment..."
-          class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-          rows="3"
+            v-model="newCommentContent"
+            placeholder="Write a comment..."
+            class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+            rows="3"
         ></textarea>
         <button
-          type="submit"
-          class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
+            type="submit"
+            class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
         >
-          Post Comment
+            Post Comment
         </button>
-      </form>
-    </div>
+    </form>
+</div>
       </div>
     </div>
   </div>
@@ -363,28 +362,29 @@ const fetchComments = async (noteId) => {
   }
 };
 
-// ส่งคอมเมนต์
 const submitComment = async () => {
-  if (!newCommentContent.value.trim()) return;
-  try {
-    const res = await axios.post(
-      `${backendBaseURL}/api/comments/${selectedNote.value.id}`,
-      { content: newCommentContent.value },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    noteComments.value.unshift(res.data);
-    newCommentContent.value = '';
+  if (!newCommentContent.value.trim()) return;
+  try {
+    const res = await axios.post(
+      `${backendBaseURL}/api/comments/${selectedNote.value.id}`,
+      { content: newCommentContent.value },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    // โค้ดสำคัญ: เพิ่มคอมเมนต์ใหม่ลงในอาร์เรย์ทันที
+    noteComments.value.unshift(res.data);
+    newCommentContent.value = '';
 
-    const noteIndex = allNotes.value.findIndex(note => note.id === selectedNote.value.id);
-    if (noteIndex !== -1) {
-      allNotes.value[noteIndex].comment_count = noteComments.value.length;
-    }
-    if (selectedNote.value) {
-      selectedNote.value.comment_count = noteComments.value.length;
-    }
-  } catch (e) {
-    console.error('Failed to post comment:', e);
-  }
+    // อัปเดตจำนวนคอมเมนต์บนหน้าจอ
+    const noteIndex = allNotes.value.findIndex(note => note.id === selectedNote.value.id);
+    if (noteIndex !== -1) {
+      allNotes.value[noteIndex].comment_count = noteComments.value.length;
+    }
+    if (selectedNote.value) {
+      selectedNote.value.comment_count = noteComments.value.length;
+    }
+  } catch (e) {
+    console.error('Failed to post comment:', e);
+  }
 };
 
 const openNoteModal = (note) => {
