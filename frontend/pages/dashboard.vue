@@ -19,6 +19,7 @@
       />
 
       <div v-if="allNotes.length > 0" class="grid grid-cols-4 gap-6">
+  
   <div
     v-for="note in allNotes"
     :key="note.id"
@@ -184,7 +185,10 @@
   @click.self="closeNoteModal"
   style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
 >
-  <div class="bg-white p-6 rounded-md max-w-lg w-full shadow-lg relative">
+  <div
+    class="bg-white p-6 rounded-md shadow-lg relative flex"
+    style="width: 750px; height: 500px; overflow: hidden;"
+  >
     <button
       @click="closeNoteModal"
       class="absolute top-2 right-2 text-gray-700 hover:text-black text-xl font-bold"
@@ -193,62 +197,87 @@
       &times;
     </button>
 
-    <!-- ✅ ย้ายชื่อผู้เขียนขึ้นบนสุด -->
-    <div class="flex items-center justify-between mb-2">
-      <div class="flex items-center gap-2">
-        <img
-          v-if="selectedNote.user_profile_pic"
-          :src="getFullProfilePicURL(selectedNote.user_profile_pic)"
-          alt="User Profile"
-          class="w-8 h-8 rounded-full object-cover"
-        />
-        <div
-          v-else
-          class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm select-none"
-        >
-          {{ selectedNote.username ? selectedNote.username.charAt(0).toUpperCase() : "?" }}
+    <!-- ซ้าย: เนื้อหาโน้ต -->
+    <div
+      class="note-content"
+      style="flex: 1 1 60%; overflow-y: auto; padding-right: 12px;"
+    >
+      <!-- ชื่อผู้เขียน + หัวใจ -->
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <img
+            v-if="selectedNote.user_profile_pic"
+            :src="getFullProfilePicURL(selectedNote.user_profile_pic)"
+            alt="User Profile"
+            class="w-8 h-8 rounded-full object-cover"
+          />
+          <div
+            v-else
+            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm select-none"
+          >
+            {{ selectedNote.username ? selectedNote.username.charAt(0).toUpperCase() : "?" }}
+          </div>
+          <span class="font-semibold text-black">
+            {{ selectedNote.username || 'Unknown' }}
+          </span>
         </div>
-        <span class="font-semibold text-black">
-          {{ selectedNote.username || 'Unknown' }}
-        </span>
+
       </div>
 
-      <!-- ✅ ย้ายหัวใจขึ้นมาตรงนี้แทน -->
-      <button
-        @click.stop="toggleFavorite(selectedNote.id)"
-        class="favorite-btn text-2xl"
-        :title="isFavorite(selectedNote.id) ? 'Remove from favorites' : 'Add to favorites'"
+      <!-- ชื่อโน้ต -->
+      <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
+
+      <!-- เนื้อหาโน้ต -->
+      <p
+        class="whitespace-pre-wrap text-gray-900 mb-4"
+        style="max-height: 100px; overflow-y: auto;"
       >
-        <span
-          :class="{
-            'text-red-500': isFavorite(selectedNote.id),
-            'text-gray-400': !isFavorite(selectedNote.id),
-          }"
-        >❤️</span>
-      </button>
+        {{ selectedNote.content }}
+      </p>
+
+      <div v-if="selectedNote.image_url" class="mt-2">
+        <img
+          :src="selectedNote.image_url"
+          alt="Note Image"
+          class="w-full max-h-60 object-contain rounded"
+        />
+      </div>
+      <button
+      @click.stop="toggleFavorite(selectedNote.id)"
+      class="favorite-btn text-2xl"
+      :title="isFavorite(selectedNote.id) ? 'Remove from favorites' : 'Add to favorites'"
+      style="position: absolute; left: 12px; bottom: 12px; cursor: pointer; user-select: none;"
+    >
+      <span
+        :class="{
+          'text-red-500': isFavorite(selectedNote.id),
+          'text-gray-400': !isFavorite(selectedNote.id),
+        }"
+      >❤️</span>
+    </button>
+
+
     </div>
 
-    <!-- ชื่อโน้ต -->
-    <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
-
-    <!-- เนื้อหาโน้ต -->
-    <p class="whitespace-pre-wrap text-gray-900 mb-4">{{ selectedNote.content }}</p>
-
-    <div v-if="selectedNote.image_url" class="mt-2">
-      <img
-        :src="selectedNote.image_url"
-        alt="Note Image"
-        class="w-full max-h-60 object-contain rounded"
-      />
-    </div>
-
-    <!-- คอมเมนต์ -->
-    <div class="mt-6 border-t border-gray-200 pt-4 text-black">
+    <!-- ขวา: คอมเมนต์ + ฟอร์ม -->
+    <div
+      class="note-comments"
+      style="flex: 1 1 40%; border-left: 1px solid #ddd; padding-left: 12px; display: flex; flex-direction: column; height: 100%;"
+    >
       <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
-      <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+      <div
+        class="comments-list flex-grow overflow-y-auto pr-2"
+        style="min-height: 0;"
+      >
         <div v-if="noteComments.length > 0">
-          <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
-            <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
+          <div
+            v-for="comment in noteComments"
+            :key="comment.id"
+            class="p-3 bg-gray-100 rounded-md mb-2"
+          >
+            <div
+              class="flex justify-between items-center text-sm font-semibold text-gray-800"
+            >
               <div>
                 <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
                 {{ comment.username }}
@@ -273,7 +302,7 @@
           v-model="newCommentContent"
           placeholder="Write a comment..."
           class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-          rows="2"
+          rows="3"
         ></textarea>
         <button
           type="submit"
@@ -283,9 +312,9 @@
         </button>
       </form>
     </div>
+      </div>
+    </div>
   </div>
-  </div>
-</div>
 
 </template>
 
