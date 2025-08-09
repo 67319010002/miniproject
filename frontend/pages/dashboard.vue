@@ -177,93 +177,116 @@
       <div class="text-gray-500">No favorite notes yet.</div>
     </div>
 
+    
     <div
-      v-if="selectedNote"
-      class="fixed inset-0 flex items-center justify-center z-50"
-      @click.self="closeNoteModal"
-      style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
-    >
-      <div class="bg-white p-6 rounded-md max-w-lg w-full shadow-lg relative">
-        <button
-          @click="closeNoteModal"
-          class="absolute top-2 right-2 text-gray-700 hover:text-black text-xl font-bold"
-          aria-label="Close modal"
-        >
-          &times;
-        </button>
-
-        <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
-        <p class="whitespace-pre-wrap text-gray-900 mb-4">{{ selectedNote.content }}</p>
-
-        <div v-if="selectedNote.image_url" class="mt-2">
-          <img
-            :src="selectedNote.image_url"
-            alt="Note Image"
-            class="w-full max-h-60 object-contain rounded"
-          />
-        </div>
-
-        <div class="text-xs text-gray-700 mt-4">
-          Written by:
-          <span class="font-semibold">{{ selectedNote.username || 'Unknown' }}</span>
-        </div>
-        
-        <div class="mt-6 border-t border-gray-200 pt-4 text-black">
-          <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
-          <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
-            <div v-if="noteComments.length > 0">
-              <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
-  <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
-    <div>
-      <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
-      {{ comment.username }}
-    </div>
+  v-if="selectedNote"
+  class="fixed inset-0 flex items-center justify-center z-50"
+  @click.self="closeNoteModal"
+  style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
+>
+  <div class="bg-white p-6 rounded-md max-w-lg w-full shadow-lg relative">
     <button
-      v-if="comment.username === username"
-      @click="deleteComment(comment.id, selectedNote.id)"
-      class="text-red-500 hover:text-red-700 text-xs"
-      title="Delete comment"
+      @click="closeNoteModal"
+      class="absolute top-2 right-2 text-gray-700 hover:text-black text-xl font-bold"
+      aria-label="Close modal"
     >
-      &times; Delete
+      &times;
     </button>
-  </div>
-  <p class="mt-1 text-gray-700">{{ comment.content }}</p>
-</div>
-            </div>
-            <div v-else class="text-gray-500 text-center">No comments yet.</div>
-          </div>
 
-          <form @submit.prevent="submitComment" class="mt-4">
-            <textarea
-              v-model="newCommentContent"
-              placeholder="Write a comment..."
-              class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-              rows="2"
-            ></textarea>
-            <button
-              type="submit"
-              class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
-            >
-              Post Comment
-            </button>
-          </form>
-        </div>
-
-        <button
-          @click.stop="toggleFavorite(selectedNote.id)"
-          class="favorite-btn absolute bottom-4 right-4 text-3xl"
-          :title="isFavorite(selectedNote.id) ? 'Remove from favorites' : 'Add to favorites'"
+    <!-- ✅ ย้ายชื่อผู้เขียนขึ้นบนสุด -->
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <img
+          v-if="selectedNote.user_profile_pic"
+          :src="getFullProfilePicURL(selectedNote.user_profile_pic)"
+          alt="User Profile"
+          class="w-8 h-8 rounded-full object-cover"
+        />
+        <div
+          v-else
+          class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm select-none"
         >
-          <span
-            :class="{
-              'text-red-500': isFavorite(selectedNote.id),
-              'text-gray-500': !isFavorite(selectedNote.id),
-            }"
-          >❤️</span>
-        </button>
+          {{ selectedNote.username ? selectedNote.username.charAt(0).toUpperCase() : "?" }}
+        </div>
+        <span class="font-semibold text-black">
+          {{ selectedNote.username || 'Unknown' }}
+        </span>
       </div>
+
+      <!-- ✅ ย้ายหัวใจขึ้นมาตรงนี้แทน -->
+      <button
+        @click.stop="toggleFavorite(selectedNote.id)"
+        class="favorite-btn text-2xl"
+        :title="isFavorite(selectedNote.id) ? 'Remove from favorites' : 'Add to favorites'"
+      >
+        <span
+          :class="{
+            'text-red-500': isFavorite(selectedNote.id),
+            'text-gray-400': !isFavorite(selectedNote.id),
+          }"
+        >❤️</span>
+      </button>
+    </div>
+
+    <!-- ชื่อโน้ต -->
+    <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
+
+    <!-- เนื้อหาโน้ต -->
+    <p class="whitespace-pre-wrap text-gray-900 mb-4">{{ selectedNote.content }}</p>
+
+    <div v-if="selectedNote.image_url" class="mt-2">
+      <img
+        :src="selectedNote.image_url"
+        alt="Note Image"
+        class="w-full max-h-60 object-contain rounded"
+      />
+    </div>
+
+    <!-- คอมเมนต์ -->
+    <div class="mt-6 border-t border-gray-200 pt-4 text-black">
+      <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
+      <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+        <div v-if="noteComments.length > 0">
+          <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
+            <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
+              <div>
+                <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
+                {{ comment.username }}
+              </div>
+              <button
+                v-if="comment.username === username"
+                @click="deleteComment(comment.id, selectedNote.id)"
+                class="text-red-500 hover:text-red-700 text-xs"
+                title="Delete comment"
+              >
+                &times; Delete
+              </button>
+            </div>
+            <p class="mt-1 text-gray-700">{{ comment.content }}</p>
+          </div>
+        </div>
+        <div v-else class="text-gray-500 text-center">No comments yet.</div>
+      </div>
+
+      <form @submit.prevent="submitComment" class="mt-4">
+        <textarea
+          v-model="newCommentContent"
+          placeholder="Write a comment..."
+          class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
+          rows="2"
+        ></textarea>
+        <button
+          type="submit"
+          class="mt-2 w-full bg-blue-500 text-white hover:bg-blue-600 rounded text-sm px-3 py-1"
+        >
+          Post Comment
+        </button>
+      </form>
     </div>
   </div>
+  </div>
+</div>
+
 </template>
 
 <script setup>
