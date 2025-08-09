@@ -19,89 +19,88 @@
       />
 
       <div v-if="allNotes.length > 0" class="grid grid-cols-4 gap-6">
-        <div
-          v-for="note in allNotes"
-          :key="note.id"
-          @click="openNoteModal(note)"
-          :class="[
-            'border p-4 rounded-md relative cursor-pointer note-hover-effect flex flex-col',
-            note.id === selectedNote?.id
-              ? 'bg-white text-black border-gray-400'
-              : isFavorite(note.id)
-              ? 'bg-gray-700 text-white border-gray-600'
-              : 'bg-gray-900 text-white border-gray-700'
-          ]"
-          style="aspect-ratio: 4 / 3;"
-        >
-          <h2 class="text-xl font-semibold truncate">{{ note.title }}</h2>
+  <div
+    v-for="note in allNotes"
+    :key="note.id"
+    @click="openNoteModal(note)"
+    :class="[
+      'border rounded-md relative cursor-pointer note-hover-effect flex flex-col p-4',
+      note.id === selectedNote?.id
+        ? 'bg-white text-black border-gray-400'
+        : isFavorite(note.id)
+        ? 'bg-gray-700 text-white border-gray-600'
+        : 'bg-gray-900 text-white border-gray-700'
+    ]"
+    style="aspect-ratio: 4 / 3; display: flex; flex-direction: column;"
+  >
+    <h2 class="text-xl font-semibold truncate">{{ note.title }}</h2>
 
-          <div
-            class="text-sm mt-1 select-none"
-            :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
-          >
-            ❤️ {{ note.favorite_count || 0 }} Favorites
-          </div>
-          <div
-            class="text-sm mt-1 select-none"
-            :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
-          >
-            💬 {{ note.comment_count || 0 }} Comments
-          </div>
-          
-          
-          <p
-            class="mt-2 flex-grow overflow-hidden"
-            :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
-            style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;"
-          >
-            {{ note.content }}
-          </p>
+    <div
+      class="text-sm mt-1 select-none"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+    >
+      ❤️ {{ note.favorite_count || 0 }} Favorites
+    </div>
+    <div
+      class="text-sm mt-1 select-none"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+    >
+      💬 {{ note.comment_count || 0 }} Comments
+    </div>
 
-          <div v-if="note.image_url" class="mt-4 mb-0 flex-shrink-0">
-            <img
-              :src="note.image_url"
-              alt="Note Image"
-              class="w-full h-auto object-contain rounded"
-              style="max-height: 120px;"
-            />
-          </div>
+    <p
+      class="mt-2 flex-grow overflow-hidden"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
+      style="display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;"
+    >
+      {{ note.content }}
+    </p>
 
-          <div
-            class="flex items-center gap-2 mt-2 select-none"
-            :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
-            style="white-space: nowrap;"
-          >
-            <img
-              v-if="note.user_profile_pic"
-              :src="getFullProfilePicURL(note.user_profile_pic)"
-              alt="User Profile"
-              class="w-6 h-6 rounded-full object-cover"
-            />
-            <div
-              v-else
-              class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-xs select-none"
-            >
-              {{ note.username ? note.username.charAt(0).toUpperCase() : "?" }}
-            </div>
-            <span :class="note.id === selectedNote?.id ? 'font-semibold text-black' : 'font-semibold'">
-              {{ note.username || 'Unknown' }}
-            </span>
-          </div>
+    <div v-if="note.image_url" class="mt-4 flex-shrink-0">
+      <img
+        :src="note.image_url"
+        alt="Note Image"
+        class="w-full h-28 object-cover rounded"
+      />
+    </div>
 
-          <button
-            @click.stop="toggleFavorite(note.id)"
-            class="favorite-btn absolute bottom-3 right-3 text-xl"
-            :title="isFavorite(note.id) ? 'Remove from favorites' : 'Add to favorites'"
-          >
-            <span
-              :class="{
-                'text-red-500': isFavorite(note.id),
-                'text-gray-500': !isFavorite(note.id),
-              }"
-            >❤️</span>
-          </button>
-        </div>
+    <div
+      class="flex items-center gap-2 mt-auto select-none pt-2 border-t border-gray-700"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-300'"
+      style="white-space: nowrap;"
+    >
+      <img
+        v-if="note.user_profile_pic"
+        :src="getFullProfilePicURL(note.user_profile_pic)"
+        alt="User Profile"
+        class="w-6 h-6 rounded-full object-cover"
+      />
+      <div
+        v-else
+        class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-xs select-none"
+      >
+        {{ note.username ? note.username.charAt(0).toUpperCase() : "?" }}
       </div>
+      <span :class="note.id === selectedNote?.id ? 'font-semibold text-black' : 'font-semibold'">
+        {{ note.username || 'Unknown' }}
+      </span>
+    </div>
+
+    <button
+      @click.stop="toggleFavorite(note.id)"
+      class="favorite-btn absolute bottom-3 right-3 text-xl"
+      :title="isFavorite(note.id) ? 'Remove from favorites' : 'Add to favorites'"
+    >
+      <span
+        :class="{
+          'text-red-500': isFavorite(note.id),
+          'text-gray-500': !isFavorite(note.id),
+        }"
+      >❤️</span>
+    </button>
+  </div>
+</div>
+
       <div v-else class="text-gray-500 mt-8">No notes to display</div>
     </div>
 
