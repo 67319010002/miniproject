@@ -175,7 +175,7 @@
           </button>
         </div>
       </div>
-      <div class="text-gray-500">No favorite notes yet.</div>
+      
     </div>
 
     
