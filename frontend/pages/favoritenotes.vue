@@ -62,7 +62,10 @@
   @click.self="closeNoteModal"
   style="background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"
 >
-  <div class="bg-white p-6 rounded-md max-w-lg w-full shadow-lg relative">
+  <div
+    class="bg-white p-6 rounded-md shadow-lg relative flex"
+    style="width: 750px; height: 500px; overflow: hidden;"
+  >
     <button
       @click="closeNoteModal"
       class="absolute top-2 right-2 text-gray-700 hover:text-black text-xl font-bold"
@@ -70,39 +73,99 @@
     >
       &times;
     </button>
-    <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
-    <p class="whitespace-pre-wrap text-gray-900 mb-4">{{ selectedNote.content }}</p>
-    <div v-if="selectedNote.image_url" class="mt-2">
-      <img
-        :src="selectedNote.image_url"
-        alt="Note Image"
-        class="w-full max-h-60 object-contain rounded"
-      />
-    </div>
-    <div class="text-xs text-gray-700 mt-4">
-      Written by: <span class="font-semibold">{{ selectedNote.username || 'Unknown' }}</span>
+
+    <div
+      class="note-content"
+      style="flex: 1 1 60%; overflow-y: auto; padding-right: 12px;"
+    >
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <img
+            v-if="selectedNote.user_profile_pic"
+            :src="getFullProfilePicURL(selectedNote.user_profile_pic)"
+            alt="User Profile"
+            class="w-8 h-8 rounded-full object-cover"
+          />
+          <div
+            v-else
+            class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm select-none"
+          >
+            {{ selectedNote.username ? selectedNote.username.charAt(0).toUpperCase() : "?" }}
+          </div>
+          <span class="font-semibold text-black">
+            {{ selectedNote.username || 'Unknown' }}
+          </span>
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-2 text-black">{{ selectedNote.title }}</h2>
+
+      <p
+        class="whitespace-pre-wrap text-gray-900 mb-4"
+        style="max-height: 100px; overflow-y: auto;"
+      >
+        {{ selectedNote.content }}
+      </p>
+
+      <div v-if="selectedNote.image_url" class="mt-2">
+        <img
+          :src="selectedNote.image_url"
+          alt="Note Image"
+          class="w-full max-h-60 object-contain rounded"
+        />
+      </div>
+
+      <button
+        @click.stop="removeFavorite(selectedNote.id)"
+        class="favorite-btn text-2xl"
+        title="Remove from favorites"
+        style="position: absolute; left: 12px; bottom: 12px; cursor: pointer; user-select: none;"
+      >
+        <span class="text-red-500">❤️</span>
+      </button>
     </div>
 
-    <div class="mt-6 border-t border-gray-200 pt-4 text-black">
+    <div
+      class="note-comments"
+      style="flex: 1 1 40%; border-left: 1px solid #ddd; padding-left: 12px; display: flex; flex-direction: column; height: 100%;"
+    >
       <h3 class="text-xl font-semibold mb-4">Comments ({{ noteComments.length }})</h3>
-      <div class="space-y-4 max-h-60 overflow-y-auto pr-2">
+      <div
+          class="comments-list flex-grow overflow-y-auto pr-2"
+          style="min-height: 0;"
+      >
         <div v-if="noteComments.length > 0">
-          <div v-for="comment in noteComments" :key="comment.id" class="p-3 bg-gray-100 rounded-md">
-            <div class="flex items-center text-sm font-semibold text-gray-800">
-              <span class="text-xs text-gray-500 mr-2">{{ comment.created_at }}</span>
+          <div
+            v-for="comment in noteComments"
+            :key="comment.id"
+            class="p-3 bg-gray-100 rounded-md mb-2"
+          >
+            <div class="flex justify-between items-center text-sm font-semibold text-gray-800">
               {{ comment.username }}
+              <button
+                v-if="comment.username === username"
+                @click="deleteComment(comment.id, selectedNote.id)"
+                class="text-red-500 hover:text-red-700 text-xs"
+                title="Delete comment"
+              >
+                &times; Delete
+              </button>
             </div>
             <p class="mt-1 text-gray-700">{{ comment.content }}</p>
+            <div class="text-right">
+              <span class="text-xs text-gray-500">{{ comment.created_at }}</span>
+            </div>
           </div>
         </div>
         <div v-else class="text-gray-500 text-center">No comments yet.</div>
       </div>
+
       <form @submit.prevent="submitComment" class="mt-4">
         <textarea
           v-model="newCommentContent"
           placeholder="Write a comment..."
           class="w-full p-2 text-sm text-gray-900 bg-gray-100 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-          rows="2"
+          rows="3"
         ></textarea>
         <button
           type="submit"
@@ -122,62 +185,90 @@ import axios from 'axios'
 import { ref, onMounted, computed } from 'vue'
 
 const token = localStorage.getItem('token')
+const username = ref(localStorage.getItem("username") || "guest"); // 🔹 เพิ่มตัวแปรนี้
 const allNotes = ref([])
 const favoriteNoteIds = ref(new Set())
 
 const selectedNote = ref(null)
-// 🔹 เพิ่มตัวแปรสำหรับคอมเมนต์
 const newCommentContent = ref('')
 const noteComments = ref([])
 
-// 🔹 ปรับปรุงฟังก์ชัน openNoteModal ให้ดึงคอมเมนต์มาแสดง
+// 🔹 อัปเดตฟังก์ชัน openNoteModal ให้ดึงคอมเมนต์มาแสดง
 const openNoteModal = (note) => {
-  selectedNote.value = note
-  if (note && note.id) {
-    fetchComments(note.id)
-  }
+  selectedNote.value = note
+  if (note && note.id) {
+    fetchComments(note.id)
+  }
 }
 
-// 🔹 ปรับปรุงฟังก์ชัน closeNoteModal ให้ล้างข้อมูลคอมเมนต์
 const closeNoteModal = () => {
-  selectedNote.value = null
-  noteComments.value = []
-  newCommentContent.value = ''
+  selectedNote.value = null
+  noteComments.value = []
+  newCommentContent.value = ''
 }
 
-// 🔹 ฟังก์ชันสำหรับดึงคอมเมนต์จาก Backend
+// 🔹 เพิ่มฟังก์ชันสำหรับดึงคอมเมนต์จาก Backend
 const fetchComments = async (noteId) => {
-  try {
-    const res = await axios.get(`http://localhost:5000/api/comments/${noteId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    noteComments.value = res.data
-  } catch (e) {
-    console.error('Failed to fetch comments:', e)
-  }
+  try {
+    const res = await axios.get(`http://localhost:5000/api/comments/${noteId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    noteComments.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch comments:', e)
+  }
 }
 
-// 🔹 ฟังก์ชันสำหรับส่งคอมเมนต์ใหม่
+// 🔹 เพิ่มฟังก์ชันสำหรับส่งคอมเมนต์ใหม่
 const submitComment = async () => {
-  if (!newCommentContent.value.trim()) return
+  if (!newCommentContent.value.trim()) return
 
+  try {
+    const res = await axios.post(
+      `http://localhost:5000/api/comments/${selectedNote.value.id}`,
+      { content: newCommentContent.value },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    noteComments.value.unshift(res.data)
+    newCommentContent.value = ''
+    
+    // อัปเดตจำนวนคอมเมนต์บนโน้ตที่เลือก
+    if (selectedNote.value) {
+      selectedNote.value.comment_count = noteComments.value.length
+    }
+  } catch (e) {
+    console.error('Failed to post comment:', e)
+  }
+}
+
+// 🔹 เพิ่มฟังก์ชันสำหรับลบคอมเมนต์
+const deleteComment = async (commentId, noteId) => {
+  if (!confirm("Are you sure you want to delete this comment?")) return;
   try {
-    const res = await axios.post(
-      `http://localhost:5000/api/comments/${selectedNote.value.id}`,
-      { content: newCommentContent.value },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    noteComments.value.unshift(res.data)
-    newCommentContent.value = ''
-    
-    // อัปเดตจำนวนคอมเมนต์บนโน้ตที่เลือก
-    if (selectedNote.value) {
-      selectedNote.value.comment_count = noteComments.value.length
+    const res = await axios.delete(`http://localhost:5000/api/comments/${commentId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.status === 200) {
+      noteComments.value = noteComments.value.filter(comment => comment.id !== commentId);
+      const noteInAllNotes = allNotes.value.find(note => note.id === noteId);
+      if (noteInAllNotes) {
+        noteInAllNotes.comment_count = noteComments.value.length;
+      }
+      if (selectedNote.value) {
+        selectedNote.value.comment_count = noteComments.value.length;
+      }
     }
   } catch (e) {
-    console.error('Failed to post comment:', e)
+    console.error('Failed to delete comment:', e);
   }
-}
+};
+
+// 🔹 เพิ่มฟังก์ชันสำหรับแสดงรูปโปรไฟล์
+const getFullProfilePicURL = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `http://localhost:5000${path}`;
+};
 
 // ... โค้ดเดิมส่วนอื่นๆ
 const fetchFavoritesFromBackend = async () => {
