@@ -66,6 +66,7 @@ const profileImage = ref(null)
 const errorMsg = ref('')
 const successMsg = ref('')
 const router = useRouter()
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
 const onFileChange = (e) => {
   profileImage.value = e.target.files[0]
@@ -90,7 +91,7 @@ const handleRegister = async () => {
       formData.append('profile_image', profileImage.value)
     }
 
-    const res = await axios.post('http://localhost:5000/api/register', formData, {
+    const res = await axios.post(`${backendBaseURL}/api/register`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

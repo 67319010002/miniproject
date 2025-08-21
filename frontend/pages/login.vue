@@ -44,6 +44,7 @@ const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
 const router = useRouter()
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
 function updateUsername(newUsername) {
   localStorage.setItem('username', newUsername)
@@ -59,7 +60,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const res = await axios.post('http://localhost:5000/api/login', {
+    const res = await axios.post(`${backendBaseURL}/api/login`, {
       username: username.value,
       password: password.value
     })
