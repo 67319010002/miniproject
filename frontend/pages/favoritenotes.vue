@@ -49,6 +49,18 @@
             />
           </svg>
         </button>
+       <div
+      class="text-sm mt-1 select-none"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+    >
+      ❤️ {{ note.favorite_count || 0 }} Favorites
+    </div>
+    <div
+      class="text-sm mt-1 select-none"
+      :class="note.id === selectedNote?.id ? 'text-black' : 'text-gray-400'"
+    >
+      💬 {{ note.comment_count || 0 }} Comments
+    </div>
       </div>
     </div>
 
@@ -325,6 +337,28 @@ onMounted(() => {
   fetchFavoritesFromBackend()
   fetchAllNotes()
 })
+const removeFavorite = async (noteId) => {
+  try {
+    await axios.post(`http://localhost:5000/api/favorites/${noteId}`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    favoriteNoteIds.value.delete(noteId)
+
+    const noteIndex = allNotes.value.findIndex(note => note.id === noteId)
+    if (noteIndex !== -1) {
+      allNotes.value[noteIndex].favorite_count =
+        (allNotes.value[noteIndex].favorite_count || 1) - 1
+    }
+
+    if (selectedNote.value && selectedNote.value.id === noteId) {
+      selectedNote.value.favorite_count = (selectedNote.value.favorite_count || 1) - 1
+    }
+
+  } catch (e) {
+    console.error('Failed to toggle favorite (as remove):', e)
+  }
+}
+
 </script>
 
 <style>
