@@ -57,7 +57,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-
+import.meta.env.VITE_BACKEND_BASE_URL
 const username = ref('')
 const email = ref('')
 const password = ref('')

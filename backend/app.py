@@ -10,7 +10,9 @@ from routes.notes import notes
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app)
+# เปิด CORS ให้ frontend เข้าถึงได้จากทุกที่ (หรือระบุ origin ของคุณได้)
+CORS(app)  # หรือ: CORS(app, resources={r"/api/*": {"origins": "http://202.29.231.188:3222"}})
+
 jwt = JWTManager(app)
 
 # เชื่อมต่อ MongoDB ด้วย mongoengine โดยตรง (ใช้ connection string)
@@ -29,4 +31,5 @@ def static_files(filename):
     return send_from_directory('static', filename)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # เปลี่ยน host เป็น 0.0.0.0 และพอร์ตเป็น 5222
+    app.run(host="0.0.0.0", port=5222, debug=True)
