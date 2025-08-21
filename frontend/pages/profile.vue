@@ -115,7 +115,8 @@ const editForm = ref({
   profile_image: null
 })
 
-const baseURL = 'http://localhost:5000'
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5222";
+
 
 // ดึงข้อมูลโปรไฟล์
 const fetchUserProfile = async () => {
@@ -126,7 +127,7 @@ const fetchUserProfile = async () => {
       return
     }
 
-    const response = await axios.get(`${baseURL}/api/profile`, {
+    const response = await axios.get(`${backendBaseURL}/api/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
@@ -174,11 +175,11 @@ const fullImageUrl = computed(() => {
   
   // ถ้าเป็น path ในระบบเรา
   if (user.value.profile_image_url.startsWith('/static')) {
-    return `${baseURL}${user.value.profile_image_url}`
+    return `${backendBaseURL}${user.value.profile_image_url}`
   }
   
   // กรณีอื่นๆ
-  return `${baseURL}/static/uploads/${user.value.profile_image_url}`
+  return `${backendBaseURL}/static/uploads/${user.value.profile_image_url}`
 })
 
 // เปิด dialog เลือกไฟล์
@@ -253,7 +254,7 @@ const saveChanges = async () => {
     }
 
     const token = localStorage.getItem('token')
-    const response = await axios.put(`${baseURL}/api/profile`, formData, {
+    const response = await axios.put(`${backendBaseURL}/api/profile`, formData, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
