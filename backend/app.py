@@ -32,4 +32,4 @@ def static_files(filename):
 
 if __name__ == "__main__":
     # เปลี่ยน host เป็น 0.0.0.0 และพอร์ตเป็น 5222
-    app.run(host="0.0.0.0", port=5222, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

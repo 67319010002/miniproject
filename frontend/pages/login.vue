@@ -40,11 +40,12 @@ import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import.meta.env.VITE_BACKEND_BASE_URL
+
 const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
 const router = useRouter()
-const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5222";
 
 function updateUsername(newUsername) {
   localStorage.setItem('username', newUsername)
