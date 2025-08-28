@@ -39,13 +39,12 @@
 import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import.meta.env.VITE_BACKEND_BASE_URL
 
 const username = ref('')
 const password = ref('')
 const errorMsg = ref('')
 const router = useRouter()
-const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5222";
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5222"
 
 function updateUsername(newUsername) {
   localStorage.setItem('username', newUsername)
@@ -66,8 +65,10 @@ const handleLogin = async () => {
       password: password.value
     })
 
+    // เก็บ token
     localStorage.setItem('token', res.data.access_token)
 
+    // เก็บ user
     if (res.data.user) {
       localStorage.setItem(
         'user',
@@ -79,6 +80,9 @@ const handleLogin = async () => {
       )
       updateUsername(res.data.user.username)
     }
+
+    // ✅ แจ้ง Navbar ให้รู้ว่ามีการล็อกอินแล้ว
+    window.dispatchEvent(new Event('auth-changed'))
 
     router.push('/dashboard')
   } catch (err) {

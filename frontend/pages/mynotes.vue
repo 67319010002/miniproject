@@ -142,6 +142,7 @@
 <script setup>
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
+const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5000";
 
 const title = ref('')
 const content = ref('')
@@ -159,7 +160,7 @@ const editImageUrl = ref('')
 
 const fetchMyNotes = async () => {
   try {
-    const res = await axios.get('http://localhost:5000/api/notes', {
+    const res = await axios.get(`${backendBaseURL}/api/notes`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     myNotes.value = res.data
@@ -172,7 +173,7 @@ const createNote = async () => {
   if (!title.value || !content.value) return
   try {
     await axios.post(
-      'http://localhost:5000/api/notes',
+      `${backendBaseURL}/api/notes`,
       { title: title.value, content: content.value, image_url: imageUrl.value },
       { headers: { Authorization: `Bearer ${token}` } }
     )
@@ -188,7 +189,7 @@ const createNote = async () => {
 
 const deleteNote = async (id) => {
   try {
-    await axios.delete(`http://localhost:5000/api/notes/${id}`, {
+    await axios.delete(`${backendBaseURL}/api/notes/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     fetchMyNotes()
@@ -214,7 +215,7 @@ const cancelEdit = () => {
 const saveNote = async (id) => {
   try {
     await axios.put(
-      `http://localhost:5000/api/notes/${id}`,
+      `${backendBaseURL}/api/notes/${id}`,
       { title: editTitle.value, content: editContent.value, image_url: editImageUrl.value },
       { headers: { Authorization: `Bearer ${token}` } }
     )
@@ -229,7 +230,7 @@ const searchMyNotes = async () => {
   const q = searchMyQuery.value.trim()
   if (!q) return fetchMyNotes()
   try {
-    const res = await axios.get(`http://localhost:5000/api/notes/search?q=${encodeURIComponent(q)}`, {
+    const res = await axios.get(`${backendBaseURL}/api/notes/search?q=${encodeURIComponent(q)}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     myNotes.value = res.data
