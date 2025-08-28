@@ -303,3 +303,25 @@ def delete_comment(comment_id):
         return jsonify({"message": "Comment deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+# 🔹 Route สำหรับลบfavorites 
+@notes.route('/favorites/<note_id>', methods=['DELETE'])
+@jwt_required()
+def remove_favorite(note_id):
+    user_id = get_jwt_identity()
+    user = User.objects(id=ObjectId(user_id)).first()
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    note = Note.objects(id=ObjectId(note_id)).first()
+    if not note:
+        return jsonify({"msg": "Note not found"}), 404
+
+    favorite = Favorite.objects(user=user).first()
+    if not favorite or note not in favorite.notes:
+        return jsonify({"msg": "Note not in favorites"}), 400
+
+    favorite.notes.remove(note)
+    favorite.save()
+
+    return jsonify({"msg": "Note removed from favorites"}), 200
