@@ -80,13 +80,6 @@
           </button>
         </template>
       </div>
-
-      <button
-        @click="handleLogout"
-        class="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 w-full rounded-lg transition duration-200"
-      >
-        Logout
-      </button>
     </div>
   </div>
 </template>
@@ -117,8 +110,6 @@ const editForm = ref({
 
 const backendBaseURL = import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:5222";
 
-
-// ดึงข้อมูลโปรไฟล์
 const fetchUserProfile = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -131,23 +122,20 @@ const fetchUserProfile = async () => {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     
-    // อัพเดทข้อมูลผู้ใช้
     user.value = {
-      id: response.data.id, // แก้ไข: ดึง id จาก response
+      id: response.data.id,
       username: response.data.username,
       email: response.data.email,
       profile_image_url: response.data.profile_image_url || '',
       original_image_url: response.data.profile_image_url || ''
     }
     
-    // อัพเดทแบบฟอร์มแก้ไข
     editForm.value = {
       username: response.data.username,
       email: response.data.email,
       profile_image: null
     }
     
-    // บันทึกข้อมูลใหม่ลง localStorage
     localStorage.setItem('user', JSON.stringify({
       id: user.value.id,
       username: user.value.username,
@@ -156,51 +144,33 @@ const fetchUserProfile = async () => {
     }))
   } catch (error) {
     console.error('Failed to fetch profile:', error)
-    if (error.response?.status === 401) {
-      handleLogout()
-    } else {
-      alert('Failed to load profile data')
-    }
+    if (error.response?.status === 401) router.push('/login')
+    else alert('Failed to load profile data')
   }
 }
 
-// แสดง URL รูปภาพแบบเต็ม
 const fullImageUrl = computed(() => {
   if (!user.value.profile_image_url) return null
-  
-  // ถ้าเป็น URL เต็ม (เช่น จาก social login)
-  if (user.value.profile_image_url.startsWith('http')) {
-    return user.value.profile_image_url
-  }
-  
-  // ถ้าเป็น path ในระบบเรา
-  if (user.value.profile_image_url.startsWith('/static')) {
-    return `${backendBaseURL}${user.value.profile_image_url}`
-  }
-  
-  // กรณีอื่นๆ
+  if (user.value.profile_image_url.startsWith('http')) return user.value.profile_image_url
+  if (user.value.profile_image_url.startsWith('/static')) return `${backendBaseURL}${user.value.profile_image_url}`
   return `${backendBaseURL}/static/uploads/${user.value.profile_image_url}`
 })
 
-// เปิด dialog เลือกไฟล์
 const openImageUpload = () => {
   if (!isEditing.value) return
   fileInput.value.click()
 }
 
-// จัดการอัพโหลดรูปภาพ
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  // ตรวจสอบประเภทไฟล์
   const validTypes = ['image/jpeg', 'image/png', 'image/gif']
   if (!validTypes.includes(file.type)) {
     alert('Please select a valid image file (JPEG, PNG, GIF)')
     return
   }
 
-  // ตรวจสอบขนาดไฟล์ (ไม่เกิน 5MB)
   if (file.size > 5 * 1024 * 1024) {
     alert('Image size should be less than 5MB')
     return
@@ -208,7 +178,6 @@ const handleImageUpload = (event) => {
 
   editForm.value.profile_image = file
   
-  // แสดงตัวอย่างรูปภาพก่อนอัพโหลด
   const reader = new FileReader()
   reader.onload = (e) => {
     user.value.profile_image_url = e.target.result
@@ -216,13 +185,11 @@ const handleImageUpload = (event) => {
   reader.readAsDataURL(file)
 }
 
-// เริ่มโหมดแก้ไข
 const startEditing = () => {
   isEditing.value = true
   user.value.original_image_url = user.value.profile_image_url
 }
 
-// ยกเลิกการแก้ไข
 const cancelEditing = () => {
   isEditing.value = false
   editForm.value = {
@@ -233,35 +200,21 @@ const cancelEditing = () => {
   user.value.profile_image_url = user.value.original_image_url
 }
 
-// บันทึกการเปลี่ยนแปลง
 const saveChanges = async () => {
   isLoading.value = true
   
   try {
     const formData = new FormData()
-    
-    // เพิ่มข้อมูลที่เปลี่ยนแปลง
-    if (editForm.value.username !== user.value.username) {
-      formData.append('username', editForm.value.username)
-    }
-    
-    if (editForm.value.email !== user.value.email) {
-      formData.append('email', editForm.value.email)
-    }
-    
-    if (editForm.value.profile_image) {
-      formData.append('profile_image', editForm.value.profile_image)
-    }
+    if (editForm.value.username !== user.value.username) formData.append('username', editForm.value.username)
+    if (editForm.value.email !== user.value.email) formData.append('email', editForm.value.email)
+    if (editForm.value.profile_image) formData.append('profile_image', editForm.value.profile_image)
 
     const token = localStorage.getItem('token')
     const response = await axios.put(`${backendBaseURL}/api/profile`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Authorization': `Bearer ${token}` },
       timeout: 10000
     })
 
-    // อัพเดทข้อมูลผู้ใช้หลังบันทึกสำเร็จ
     user.value = {
       ...user.value,
       username: response.data.user.username,
@@ -269,45 +222,20 @@ const saveChanges = async () => {
       profile_image_url: response.data.user.profile_image_url || user.value.profile_image_url
     }
     
-    // ปิดโหมดแก้ไข
     isEditing.value = false
-    
-    // โหลดข้อมูลใหม่จากเซิร์ฟเวอร์
     await fetchUserProfile()
-    
     alert('Profile updated successfully!')
   } catch (error) {
     console.error('Failed to update profile:', error)
-    
-    // คืนค่ารูปภาพเดิมเมื่อเกิดข้อผิดพลาด
     user.value.profile_image_url = user.value.original_image_url
-    
-    if (error.response) {
-      if (error.response.status === 401) {
-        handleLogout()
-      } else {
-        alert(error.response.data?.msg || 'Failed to update profile')
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      alert('Request timeout - please try again')
-    } else {
-      alert('Network error - please check your connection')
-    }
+    if (error.response?.status === 401) router.push('/login')
+    else alert(error.response?.data?.msg || 'Failed to update profile')
   } finally {
     isLoading.value = false
   }
 }
 
-// ออกจากระบบ
-const handleLogout = () => {
-  localStorage.removeItem('user')
-  localStorage.removeItem('token')
-  router.push('/login')
-}
-
-// โหลดข้อมูลเมื่อ component ถูกโหลด
 onMounted(() => {
-  // ดึงข้อมูลจาก localStorage ก่อน
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
     try {
@@ -326,8 +254,6 @@ onMounted(() => {
       console.error('Error parsing user data:', e)
     }
   }
-  
-  // ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์
   fetchUserProfile()
 })
 </script>
