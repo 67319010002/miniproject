@@ -21,6 +21,15 @@
         </NuxtLink>
       </template>
 
+      <template v-if="!isLoggedIn">
+        <NuxtLink
+          to="/about"
+          class="px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:from-blue-600 hover:to-blue-700 hover:brightness-110"
+        >
+          ❤️ adout
+        </NuxtLink>
+      </template>
+
       <!-- ล็อกอินแล้ว -->
       <template v-else>
         <!-- My Notes -->
